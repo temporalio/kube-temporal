@@ -1,0 +1,9 @@
+*.swp
+*.swo
+*~
+run/
+bin/
+build/
+go.work
+go.work.sum
+cover.out

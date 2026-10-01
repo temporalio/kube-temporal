@@ -1,0 +1,38 @@
+name: test-unit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+
+  test-unit:
+    name: test-unit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: checkout-code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: setup-go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: 'go.mod'
+        check-latest: true
+        cache: true
+
+    - name: run-tests
+      run: make test-unit
+      
+    - name: save-coverage
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: test-unit-coverage
+        path: |
+          cover.out
+        retention-days: 7 
