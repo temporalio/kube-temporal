@@ -31,3 +31,7 @@ go-fmt: ## Run go fmt against code.
 .PHONY: go-vet
 go-vet: ## Run go vet against code.
 	go vet ./...
+
+.PHONY: go-mod-tidy
+go-mod-tidy: ## Run go mod tidy against the repository.
+	go mod tidy
