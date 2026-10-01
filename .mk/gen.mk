@@ -24,7 +24,7 @@ $(CONTROLLER_GEN): | $(BIN_DIR)
 ##@ Code generation
 
 .PHONY: gen-all
-gen-all: gen-kube-helpers gen-kube-register gen-kube-manifests ## Run all code generation targets.
+gen-all: gen-kube-helpers gen-kube-register ## Run all code generation targets.
 
 .PHONY: gen-ensure
 gen-ensure: $(KUSTOMIZE) $(CONTROLLER_GEN) $(KUBE_CODEGEN_PATH) ## Download all code generation utilities locally if necessary.
