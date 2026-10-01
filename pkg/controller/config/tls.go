@@ -2,8 +2,6 @@ package config
 
 import (
 	"crypto/tls"
-
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // TLSServerConfig contains TLS configuration options for a server. It is meant
@@ -28,11 +26,6 @@ type TLSServerConfig struct {
 	CertName string `json:"certName,omitempty"`
 	// KeyName contains the name of the server TLS key file.
 	KeyName string `json:"keyName,omitempty"`
-}
-
-// Validate checks for invalid settings.
-func (c *TLSServerConfig) Validate() field.ErrorList {
-	return nil
 }
 
 // ToOptions returns a representation of the TLSServerConfig as a slice of
