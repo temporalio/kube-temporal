@@ -25,7 +25,7 @@ type NamespaceSpec struct {
 // NamespaceStatus is the status for a Namespace resource
 // +k8s:openapi-gen=true
 type NamespaceStatus struct {
-	tmprlcorev1.StatusBase
+	tmprlcorev1.StatusBase `json:",inline"`
 }
 
 // NamespaceList is a list of Namespace resources
