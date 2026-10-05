@@ -18,8 +18,16 @@ type Namespace struct {
 }
 
 // NamespaceSpec describes the desired state of a Temporal Cloud Namespace.
+//
+// Ref: https://saas-api.tmprl.cloud/docs/httpapi.html#tag/namespaces/POST/cloud/namespaces
 // +k8s:openapi-gen=true
 type NamespaceSpec struct {
+	// ProjectID is the The id of the project in which the Temporal Cloud
+	// Namespace belongs. If not set, defaults to the account's default
+	// project.
+	ProjectID string `json:"projectID,omitempty"`
+	// Tags is the collection of string tags to attach to the Namespace.
+	Tags []string `json:"tags,omitempty"`
 }
 
 // NamespaceStatus is the status for a Namespace resource
