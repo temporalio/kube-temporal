@@ -8,14 +8,14 @@ $(KUBE_CODEGEN_PATH): | $(BIN_DIR)
 	@echo "ok."
 
 KUSTOMIZE ?= $(BIN_DIR)/kustomize
-KUSTOMIZE_VERSION ?= v5.8.1
+KUSTOMIZE_VERSION ?= v5.8.2
 $(KUSTOMIZE): | $(BIN_DIR)
 	@echo -n "installing kustomize@$(KUSTOMIZE_VERSION) ... "
 	@$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v5,$(KUSTOMIZE_VERSION))
 	@echo "ok."
 
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
-CONTROLLER_TOOLS_VERSION ?= v0.20.1
+CONTROLLER_TOOLS_VERSION ?= v0.21.0
 $(CONTROLLER_GEN): | $(BIN_DIR)
 	@echo -n "installing controller-tools@$(CONTROLLER_TOOLS_VERSION) ... "
 	@$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
