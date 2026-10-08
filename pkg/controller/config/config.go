@@ -2,6 +2,8 @@ package config
 
 import (
 	"github.com/spf13/pflag"
+
+	"github.com/temporalio/kube-temporal/pkg/log"
 )
 
 // WithOption modifies a Config returned from New.
@@ -29,12 +31,18 @@ type Config struct {
 	// behavior.
 	LeaderElection LeaderElectionConfig `json:"leaderElection"`
 	// Logging contains options for configuring logging.
-	Logging LoggingConfig `json:"logging"`
+	Logging log.Config `json:"logging"`
 	// Healthz contains options for configuring a healthz endpoint.
 	Healthz HealthzConfig `json:"healthz"`
 	// Metrics contains options for configuring metrics collection and
 	// publishing.
 	Metrics MetricsConfig `json:"metrics"`
+}
+
+// SetDefaults sets any default configuration values from environment
+// variables.
+func (c *Config) SetDefaults() {
+	c.Logging.SetDefaults()
 }
 
 // BindFlags bings the supplied flagset to the Config's fields.
