@@ -1,6 +1,8 @@
 package types
 
 import (
+	"log/slog"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,6 +15,7 @@ import (
 // helper methods.
 type Resource interface {
 	condition.Manager
+	slog.LogValuer
 	// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestamp.
 	IsBeingDeleted() bool

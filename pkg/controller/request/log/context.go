@@ -2,22 +2,22 @@ package log
 
 import (
 	"context"
-
-	"github.com/go-logr/logr"
+	"log/slog"
 
 	"github.com/temporalio/kube-temporal/pkg/types"
 )
 
+type contextKey string
+
 const (
-	// contextKey is the string key used to store a logger in a Context
-	contextKey = "request.logger"
+	contextKeyRequestLogger contextKey = "request.logger"
 )
 
 // FromContext returns a [types.Logger] from a saved key in the request
 // context
-func FromContext(ctx context.Context) types.Logger {
-	if v := ctx.Value(contextKey); v != nil {
-		return v.(*requestLogger)
+func FromContext(ctx context.Context) *Logger {
+	if v := ctx.Value(contextKeyRequestLogger); v != nil {
+		return v.(*Logger)
 	}
 	return nil
 }
@@ -27,29 +27,20 @@ func FromContext(ctx context.Context) types.Logger {
 // context.
 func ToContext(
 	ctx context.Context,
-	l logr.Logger,
+	logger *slog.Logger,
 	res types.Resource,
 ) context.Context {
 	rl := FromContext(ctx)
 	if rl != nil {
 		return ctx
 	}
-	co := res.ClientObject()
-	name := co.GetName()
-	ns := co.GetNamespace()
-	gvk := res.GroupVersionKind()
-	kind := gvk.Kind
-	groupVersion := gvk.GroupVersion()
-	l = l.WithValues(
-		"groupVersion", groupVersion.String(),
-		"kind", kind,
-		"namespace", ns,
-		"name", name,
+	logger = logger.With(
+		"resource", res,
 	)
-	rl = &requestLogger{
-		log:        l,
+	rl = &Logger{
+		logger:     logger,
 		res:        res,
 		blockDepth: 0,
 	}
-	return context.WithValue(ctx, contextKey, rl)
+	return context.WithValue(ctx, contextKeyRequestLogger, rl)
 }

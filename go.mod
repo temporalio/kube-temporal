@@ -6,9 +6,7 @@ require (
 	github.com/go-logr/logr v1.4.4
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	go.uber.org/zap v1.27.1
 	k8s.io/apimachinery v0.37.1
-	k8s.io/klog/v2 v2.140.0
 	sigs.k8s.io/cli-utils v0.37.2
 	sigs.k8s.io/controller-runtime v0.25.0
 )
@@ -27,7 +25,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v1.0.0 // indirect
 	github.com/go-openapi/swag v0.27.1 // indirect
@@ -67,7 +64,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
@@ -91,6 +87,7 @@ require (
 	k8s.io/apiserver v0.37.0 // indirect
 	k8s.io/client-go v0.37.1 // indirect
 	k8s.io/component-base v0.37.0 // indirect
+	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/streaming v0.37.1 // indirect
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
