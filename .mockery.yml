@@ -1,0 +1,14 @@
+all: false
+dir: pkg/testutil/mock
+filename: '{{.InterfaceName | lower}}.go'
+force-file-write: true
+formatter: goimports
+log-level: warn
+structname: '{{.InterfaceName}}'
+pkgname: mock
+recursive: false
+template: testify
+packages:
+  github.com/temporalio/kube-temporal/pkg/types:
+    config:
+      all: false # only generate the interfaces that are annotated with mockery:generate: true

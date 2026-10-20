@@ -21,13 +21,27 @@ $(CONTROLLER_GEN): | $(BIN_DIR)
 	@$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
 	@echo "ok."
 
+MOCKERY ?= $(BIN_DIR)/mockery
+MOCKERY_VERSION ?= v3.6.0
+$(MOCKERY): | $(BIN_DIR)
+	@echo -n "installing mockery@$(MOCKERY_VERSION) ... "
+	@$(call go-install-tool,$(MOCKERY),github.com/vektra/mockery/v3,$(MOCKERY_VERSION))
+	@echo "ok."
+
 ##@ Code generation
 
 .PHONY: gen-all
-gen-all: gen-kube-helpers gen-kube-register ## Run all code generation targets.
+gen-all: gen-ensure gen-mocks gen-kube-helpers gen-kube-register ## Run all code generation targets.
 
 .PHONY: gen-ensure
-gen-ensure: $(KUSTOMIZE) $(CONTROLLER_GEN) $(KUBE_CODEGEN_PATH) ## Download all code generation utilities locally if necessary.
+gen-ensure: $(MOCKERY) $(KUSTOMIZE) $(CONTROLLER_GEN) $(KUBE_CODEGEN_PATH) ## Download all code generation utilities locally if necessary.
+
+.PHONY: gen-mocks
+MOCKERY_CONFIG_PATH=$(ROOT_DIR)/.mockery.yml
+gen-mocks: $(MOCKERY) ## Generate mocks
+	@echo -n "generating mocks ... "
+	@$(MOCKERY) --config $(MOCKERY_CONFIG_PATH)
+	@echo "ok."
 
 .PHONY: gen-kube-helpers
 KUBE_CODEGEN_HELPERS_PATH=$(SCRIPTS_DIR)/kube-codegen-helpers.sh

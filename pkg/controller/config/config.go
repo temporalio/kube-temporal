@@ -10,10 +10,10 @@ import (
 type WithOption func(*Config)
 
 // New returns a new Config.
-func New(opts ...WithOption) *Config {
-	c := &Config{}
+func New(opts ...WithOption) Config {
+	c := Config{}
 	for _, opt := range opts {
-		opt(c)
+		opt(&c)
 	}
 	return c
 }
@@ -37,6 +37,8 @@ type Config struct {
 	// Metrics contains options for configuring metrics collection and
 	// publishing.
 	Metrics MetricsConfig `json:"metrics"`
+	// Reconcile contains options for configuration the reconciler behaviour.
+	Reconcile ReconcileConfig `json:"reconcile"`
 }
 
 // SetDefaults sets any default configuration values from environment
@@ -51,4 +53,5 @@ func (c *Config) BindFlags(fs *pflag.FlagSet) {
 	c.Logging.BindFlags(fs)
 	c.Healthz.BindFlags(fs)
 	c.Metrics.BindFlags(fs)
+	c.Reconcile.BindFlags(fs)
 }

@@ -2,9 +2,10 @@
 # deployment and local testing tasks.
 
 KUBECTL ?= kubectl
-SCRIPTS_DIR ?= $(shell pwd)/scripts
+ROOT_DIR ?= $(shell pwd)
+SCRIPTS_DIR ?= $(ROOT_DIR)/scripts
 
-BIN_DIR ?= $(shell pwd)/bin
+BIN_DIR ?= $(ROOT_DIR)/bin
 $(BIN_DIR):
 	@mkdir -p "$(BIN_DIR)"
 

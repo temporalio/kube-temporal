@@ -5,12 +5,13 @@ import (
 )
 
 var (
-	// NotImplemented is returned when a code path isn't implemented yet
-	NotImplemented = fmt.Errorf("not implemented")
+	// ErrNotImplemented is returned when a code path isn't implemented yet
+	ErrNotImplemented = fmt.Errorf("not implemented")
 	// NotFound is returned when an expected resource was not found
-	NotFound = fmt.Errorf("resource not found")
-	// Terminal is returned with resource is in Terminal Condition
-	Terminal = fmt.Errorf("resource is in terminal condition")
+	ErrNotFound = fmt.Errorf("resource not found")
+	// ErrResourceSync is returned from the ResourceSyncFunc callback when the
+	// reconciler fails to synchronize the desired state of a resource.
+	ErrResourceSync = fmt.Errorf("failed resource sync")
 )
 
 // TerminalError defines an error that should be considered terminal, causing a
