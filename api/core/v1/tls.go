@@ -1,6 +1,10 @@
 package v1
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	"crypto/md5"
+
+	corev1 "k8s.io/api/core/v1"
+)
 
 // ServerTLSConfig defines TLS settings for a Connection.
 type ServerTLSConfig struct {
@@ -19,6 +23,21 @@ type ServerTLSConfig struct {
 	// certificate is configured using the MutualTLSConfig struct.
 	// +optional
 	CACert *CACertConfig `json:"caCert,omitempty"`
+}
+
+// Hash returns a deterministic MD5 hash of the ServerTLSConfig's field
+// components.
+func (c ServerTLSConfig) Hash() []byte {
+	out := md5.New()
+	if c.ServerName != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.ServerName))
+	}
+	if c.CACert != nil {
+		out.Write([]byte{'|'})
+		out.Write(c.CACert.Hash())
+	}
+	return out.Sum(nil)
 }
 
 // CACertConfig defines where to find the certificate authority (CA)
@@ -49,6 +68,22 @@ type CACertConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
+// Hash returns a deterministic MD5 hash of the CACertConfig's field
+// components.
+func (c CACertConfig) Hash() []byte {
+	out := md5.New()
+	if c.SecretRef != nil {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Name))
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Key))
+	} else if c.Path != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.Path))
+	}
+	return out.Sum(nil)
+}
+
 // MutualTLSPaths configures mTLS authentication to a Temporal API server using
 // cert/key material loaded from file paths inside a Pod. These file paths are
 // typically populated by an init container, sidecar container (e.g.
@@ -66,4 +101,19 @@ type MutualTLSPaths struct {
 	// Temporal API server's certificate. If empty, the system CA pool is used.
 	// +optional
 	CA string `json:"ca,omitempty"`
+}
+
+// Hash returns a deterministic MD5 hash of the MutualTLSCredentialsConfig's field
+// components.
+func (p MutualTLSPaths) Hash() []byte {
+	out := md5.New()
+	out.Write([]byte{'|'})
+	out.Write([]byte(p.Cert))
+	out.Write([]byte{'|'})
+	out.Write([]byte(p.Key))
+	if p.CA != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(p.CA))
+	}
+	return out.Sum(nil)
 }
