@@ -13,6 +13,8 @@ import (
 
 // Resource wraps the custom resource object from the Kubernetes API with some
 // helper methods.
+//
+//mockery:generate: true
 type Resource interface {
 	condition.Manager
 	slog.LogValuer
