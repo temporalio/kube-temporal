@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"crypto/md5"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,6 +38,29 @@ type ConnectionSpec struct {
 	// Credentials contains desired configuration for the Temporal client
 	// credentials.
 	Credentials CredentialsConfig `json:"credentials"`
+}
+
+// Hash returns a deterministic MD5 hash of the ConnectionSpec's field
+// components.
+func (s ConnectionSpec) Hash() []byte {
+	out := md5.New()
+	if s.HostPort != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(s.HostPort))
+	}
+	if s.Namespace != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(s.Namespace))
+	}
+	if s.Identity != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(s.Identity))
+	}
+	out.Write([]byte{'|'})
+	out.Write(s.TLS.Hash())
+	out.Write([]byte{'|'})
+	out.Write(s.Credentials.Hash())
+	return out.Sum(nil)
 }
 
 // ConnectionStatus defines the observed state of a Connection

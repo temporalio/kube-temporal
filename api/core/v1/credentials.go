@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"crypto/md5"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,6 +27,20 @@ type CredentialsConfig struct {
 	MutualTLS *MutualTLSCredentialsConfig `json:"mutualTLS,omitempty"`
 }
 
+// Hash returns a deterministic MD5 hash of the CredentialsConfig's field
+// components.
+func (c CredentialsConfig) Hash() []byte {
+	out := md5.New()
+	if c.APIKey != nil {
+		out.Write([]byte{'|'})
+		out.Write(c.APIKey.Hash())
+	} else if c.MutualTLS != nil {
+		out.Write([]byte{'|'})
+		out.Write(c.MutualTLS.Hash())
+	}
+	return out.Sum(nil)
+}
+
 // APIKeyCredentialsConfig contains configuration for connecting to a Temporal server
 // using Temporal API Key authentication.
 //
@@ -44,6 +60,22 @@ type APIKeyCredentialsConfig struct {
 	// Path is the local file path in the Pod where the API Key can be found.
 	// +optional
 	Path string `json:"path,omitempty"`
+}
+
+// Hash returns a deterministic MD5 hash of the APIKeyCredentialsConfig's field
+// components.
+func (c APIKeyCredentialsConfig) Hash() []byte {
+	out := md5.New()
+	if c.SecretRef != nil {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Name))
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Key))
+	} else if c.Path != "" {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.Path))
+	}
+	return out.Sum(nil)
 }
 
 // MutualTLSCredentialsConfig defines where to find TLS key pair and
@@ -82,4 +114,20 @@ type MutualTLSCredentialsConfig struct {
 	// be found.
 	// +optional
 	Paths *MutualTLSPaths `json:"paths,omitempty"`
+}
+
+// Hash returns a deterministic MD5 hash of the MutualTLSCredentialsConfig's field
+// components.
+func (c MutualTLSCredentialsConfig) Hash() []byte {
+	out := md5.New()
+	if c.SecretRef != nil {
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Name))
+		out.Write([]byte{'|'})
+		out.Write([]byte(c.SecretRef.Key))
+	} else if c.Paths != nil {
+		out.Write([]byte{'|'})
+		out.Write(c.Paths.Hash())
+	}
+	return out.Sum(nil)
 }
