@@ -41,8 +41,6 @@ func AllOfType(
 }
 
 // Clear resets the resource's collection of Conditions to an empty list.
-func Clear(
-	subject Manager,
-) {
+func Clear(subject Manager) {
 	subject.ReplaceConditions([]*metav1.Condition{})
 }

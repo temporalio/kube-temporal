@@ -2,6 +2,7 @@ package testing
 
 import (
 	tmprlcorev1 "github.com/temporalio/kube-temporal/api/core/v1"
+	"github.com/temporalio/kube-temporal/pkg/kube/annotation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,6 +30,16 @@ func ResourceStatusWithConditions(
 	}
 }
 
+// ResourceMetaWithAnnotations returns an ObjectMeta populated with the
+// supplied Annotations.
+func ResourceMetaWithAnnotations(
+	annos annotation.Annotations,
+) metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Annotations: annos,
+	}
+}
+
 // Resource is a Custom Resource Definition designed to test the core library.
 type Resource struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -48,4 +59,15 @@ func (r Resource) Conditions() []*metav1.Condition {
 // supplied collection. Satisfies the `pkg/condition.Manager` interface.
 func (r *Resource) ReplaceConditions(conds []*metav1.Condition) {
 	r.Status.Conditions = conds
+}
+
+// Annotations returns the set of Annotations.
+func (r *Resource) Annotations() annotation.Annotations {
+	return r.ObjectMeta.Annotations
+}
+
+// ReplaceAnnotations replaces the resource's set of Annotations with
+// the supplied Annotations.
+func (r *Resource) ReplaceAnnotations(annos annotation.Annotations) {
+	r.ObjectMeta.Annotations = annos
 }

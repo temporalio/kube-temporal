@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/temporalio/kube-temporal/pkg/testutil"
 	"github.com/temporalio/kube-temporal/pkg/testutil/fixtures"
+	"github.com/temporalio/kube-temporal/pkg/testutil/kube"
 	"github.com/temporalio/kube-temporal/pkg/testutil/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
@@ -47,7 +48,7 @@ func TestController_Reconcile_ResourceFromRequest(t *testing.T) {
 		},
 		{
 			name: "fail if resourceFromRequest errors",
-			req: testutil.NewResourceRequest(
+			req: kube.NewResourceRequest(
 				testKubeNamespace, testResourceName,
 			),
 			setup: func(
@@ -65,7 +66,7 @@ func TestController_Reconcile_ResourceFromRequest(t *testing.T) {
 		},
 		{
 			name: "empty result when not found",
-			req: testutil.NewResourceRequest(
+			req: kube.NewResourceRequest(
 				testKubeNamespace, testResourceName,
 			),
 			setup: func(
@@ -76,7 +77,7 @@ func TestController_Reconcile_ResourceFromRequest(t *testing.T) {
 				r.On(
 					"ResourceFromRequest", ctx, req,
 				).Return(
-					nil, testutil.NewNotFoundError(testResourceName),
+					nil, kube.NewNotFoundError(testResourceName),
 				)
 			},
 			exp: ctrlrt.Result{},
@@ -128,7 +129,7 @@ func TestController_Reconcile_Delete(t *testing.T) {
 	}{
 		{
 			name: "delete not called when no deletion ts",
-			req: testutil.NewResourceRequest(
+			req: kube.NewResourceRequest(
 				testKubeNamespace, testResourceName,
 			),
 			setup: func(
@@ -155,7 +156,7 @@ func TestController_Reconcile_Delete(t *testing.T) {
 		},
 		{
 			name: "delete called when deletion ts",
-			req: testutil.NewResourceRequest(
+			req: kube.NewResourceRequest(
 				testKubeNamespace, testResourceName,
 			),
 			setup: func(

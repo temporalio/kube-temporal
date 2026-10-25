@@ -8,7 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/temporalio/kube-temporal/pkg/condition"
+	"github.com/temporalio/kube-temporal/pkg/kube/annotation"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 )
 
 // Resource wraps the custom resource object from the Kubernetes API with some
@@ -17,7 +18,10 @@ import (
 //mockery:generate: true
 type Resource interface {
 	condition.Manager
+	annotation.Manager
 	slog.LogValuer
+	// CR returns a pointer to the underlying custom resource.
+	CR() any
 	// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestamp.
 	IsBeingDeleted() bool

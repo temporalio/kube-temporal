@@ -8,6 +8,7 @@ import (
 	"log/slog"
 
 	mock "github.com/stretchr/testify/mock"
+	"github.com/temporalio/kube-temporal/pkg/kube/annotation"
 	"github.com/temporalio/kube-temporal/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -41,6 +42,98 @@ type Resource_Expecter struct {
 
 func (_m *Resource) EXPECT() *Resource_Expecter {
 	return &Resource_Expecter{mock: &_m.Mock}
+}
+
+// Annotations provides a mock function for the type Resource
+func (_mock *Resource) Annotations() annotation.Annotations {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Annotations")
+	}
+
+	var r0 annotation.Annotations
+	if returnFunc, ok := ret.Get(0).(func() annotation.Annotations); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(annotation.Annotations)
+		}
+	}
+	return r0
+}
+
+// Resource_Annotations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Annotations'
+type Resource_Annotations_Call struct {
+	*mock.Call
+}
+
+// Annotations is a helper method to define mock.On call
+func (_e *Resource_Expecter) Annotations() *Resource_Annotations_Call {
+	return &Resource_Annotations_Call{Call: _e.mock.On("Annotations")}
+}
+
+func (_c *Resource_Annotations_Call) Run(run func()) *Resource_Annotations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Resource_Annotations_Call) Return(annotations annotation.Annotations) *Resource_Annotations_Call {
+	_c.Call.Return(annotations)
+	return _c
+}
+
+func (_c *Resource_Annotations_Call) RunAndReturn(run func() annotation.Annotations) *Resource_Annotations_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CR provides a mock function for the type Resource
+func (_mock *Resource) CR() any {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CR")
+	}
+
+	var r0 any
+	if returnFunc, ok := ret.Get(0).(func() any); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(any)
+		}
+	}
+	return r0
+}
+
+// Resource_CR_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CR'
+type Resource_CR_Call struct {
+	*mock.Call
+}
+
+// CR is a helper method to define mock.On call
+func (_e *Resource_Expecter) CR() *Resource_CR_Call {
+	return &Resource_CR_Call{Call: _e.mock.On("CR")}
+}
+
+func (_c *Resource_CR_Call) Run(run func()) *Resource_CR_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Resource_CR_Call) Return(v any) *Resource_CR_Call {
+	_c.Call.Return(v)
+	return _c
+}
+
+func (_c *Resource_CR_Call) RunAndReturn(run func() any) *Resource_CR_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ClientObject provides a mock function for the type Resource
@@ -310,6 +403,46 @@ func (_c *Resource_LogValue_Call) Return(value slog.Value) *Resource_LogValue_Ca
 
 func (_c *Resource_LogValue_Call) RunAndReturn(run func() slog.Value) *Resource_LogValue_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// ReplaceAnnotations provides a mock function for the type Resource
+func (_mock *Resource) ReplaceAnnotations(annotations annotation.Annotations) {
+	_mock.Called(annotations)
+	return
+}
+
+// Resource_ReplaceAnnotations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReplaceAnnotations'
+type Resource_ReplaceAnnotations_Call struct {
+	*mock.Call
+}
+
+// ReplaceAnnotations is a helper method to define mock.On call
+//   - annotations annotation.Annotations
+func (_e *Resource_Expecter) ReplaceAnnotations(annotations interface{}) *Resource_ReplaceAnnotations_Call {
+	return &Resource_ReplaceAnnotations_Call{Call: _e.mock.On("ReplaceAnnotations", annotations)}
+}
+
+func (_c *Resource_ReplaceAnnotations_Call) Run(run func(annotations annotation.Annotations)) *Resource_ReplaceAnnotations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 annotation.Annotations
+		if args[0] != nil {
+			arg0 = args[0].(annotation.Annotations)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Resource_ReplaceAnnotations_Call) Return() *Resource_ReplaceAnnotations_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Resource_ReplaceAnnotations_Call) RunAndReturn(run func(annotations annotation.Annotations)) *Resource_ReplaceAnnotations_Call {
+	_c.Run(run)
 	return _c
 }
 
