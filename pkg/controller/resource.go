@@ -11,9 +11,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlrtutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/temporalio/kube-temporal/pkg/condition"
 	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
 	ctrlreqlog "github.com/temporalio/kube-temporal/pkg/controller/request/log"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	"github.com/temporalio/kube-temporal/pkg/resource"
 	"github.com/temporalio/kube-temporal/pkg/types"
 )

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	itest "github.com/temporalio/kube-temporal/internal/testing"
-	"github.com/temporalio/kube-temporal/pkg/condition"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kstatus "sigs.k8s.io/cli-utils/pkg/kstatus/status"
 )

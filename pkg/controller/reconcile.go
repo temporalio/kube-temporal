@@ -10,10 +10,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
-	"github.com/temporalio/kube-temporal/pkg/condition"
 	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
 	ctrlreqlog "github.com/temporalio/kube-temporal/pkg/controller/request/log"
 	"github.com/temporalio/kube-temporal/pkg/controller/requeue"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	"github.com/temporalio/kube-temporal/pkg/types"
 )
 
