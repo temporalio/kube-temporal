@@ -15,8 +15,6 @@ import (
 	"github.com/temporalio/kube-temporal/pkg/types"
 )
 
-var once sync.Once
-
 // Controller implements [ctrlrt.Reconciler] and reduces the amount of
 // copy/paste necessary in constructing new operator repositories.
 type Controller struct {
@@ -27,7 +25,9 @@ type Controller struct {
 	finalizerName string
 	// client is the controller-runtime client.Client associated with the
 	// Controller.
-	client client.Client
+	// finalizerNameOnce guards the lazy computation of finalizerName.
+	finalizerNameOnce *sync.Once
+	client            client.Client
 	// reader if the direct, non-caching API reader associated with Controller.
 	reader client.Reader
 	// cfg contains the configuration settings used when creating the
@@ -47,15 +47,14 @@ func (c Controller) Name() string {
 }
 
 // FinalizerName returns the name of the finalizer to attach to the associated
-// [types.Resource]
+// [types.Resource]: its lowercased GroupKind followed by "/finalizer".
 func (c *Controller) FinalizerName(res types.Resource) string {
-	if c.finalizerName != "" {
-		return c.finalizerName
-	}
-	once.Do(func() {
+	c.finalizerNameOnce.Do(func() {
+		if c.finalizerName != "" {
+			return
+		}
 		gk := res.GroupVersionKind().GroupKind()
-		fname := fmt.Sprintf("%s/finalizer", strings.ToLower(gk.String()))
-		c.finalizerName = fname
+		c.finalizerName = fmt.Sprintf("%s/finalizer", strings.ToLower(gk.String()))
 	})
 	return c.finalizerName
 }
@@ -94,9 +93,10 @@ func New(
 ) *Controller {
 	r.SetConfig(cfg)
 	c := Controller{
-		name: name,
-		cfg:  cfg,
-		r:    r,
+		name:              name,
+		cfg:               cfg,
+		r:                 r,
+		finalizerNameOnce: &sync.Once{},
 	}
 	for _, opt := range opts {
 		opt(&c)

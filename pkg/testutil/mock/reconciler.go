@@ -95,20 +95,31 @@ func (_c *Reconciler_AdaptBuilder_Call) RunAndReturn(run func(v *controllerrunti
 }
 
 // ResourceDelete provides a mock function for the type Reconciler
-func (_mock *Reconciler) ResourceDelete(context1 context.Context, resource types.Resource) error {
+func (_mock *Reconciler) ResourceDelete(context1 context.Context, resource types.Resource) (types.Resource, error) {
 	ret := _mock.Called(context1, resource)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResourceDelete")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) error); ok {
+	var r0 types.Resource
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) (types.Resource, error)); ok {
+		return returnFunc(context1, resource)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) types.Resource); ok {
 		r0 = returnFunc(context1, resource)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Resource)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, types.Resource) error); ok {
+		r1 = returnFunc(context1, resource)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Reconciler_ResourceDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceDelete'
@@ -141,12 +152,12 @@ func (_c *Reconciler_ResourceDelete_Call) Run(run func(context1 context.Context,
 	return _c
 }
 
-func (_c *Reconciler_ResourceDelete_Call) Return(err error) *Reconciler_ResourceDelete_Call {
-	_c.Call.Return(err)
+func (_c *Reconciler_ResourceDelete_Call) Return(resource1 types.Resource, err error) *Reconciler_ResourceDelete_Call {
+	_c.Call.Return(resource1, err)
 	return _c
 }
 
-func (_c *Reconciler_ResourceDelete_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource) error) *Reconciler_ResourceDelete_Call {
+func (_c *Reconciler_ResourceDelete_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource) (types.Resource, error)) *Reconciler_ResourceDelete_Call {
 	_c.Call.Return(run)
 	return _c
 }

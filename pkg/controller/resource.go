@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/samber/lo"
+	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
+	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlrtutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
 	ctrlreqlog "github.com/temporalio/kube-temporal/pkg/controller/request/log"
-	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	"github.com/temporalio/kube-temporal/pkg/resource"
 	"github.com/temporalio/kube-temporal/pkg/types"
 )
@@ -30,14 +30,17 @@ func (c *Controller) resourceEnsureFinalizer(
 	log := ctrlreqlog.FromContext(ctx)
 
 	fname := c.FinalizerName(desired)
-	obj := desired.ClientObject()
-	if ctrlrtutil.ContainsFinalizer(obj, fname) {
+	base := desired.ClientObject()
+	if ctrlrtutil.ContainsFinalizer(base, fname) {
 		return false, nil
 	}
+	// Add the finalizer to a copy so the merge patch is computed against the
+	// unmodified object and `desired` is not mutated.
+	obj := desired.DeepCopy().ClientObject()
 	ctrlrtutil.AddFinalizer(obj, fname)
 	log.Debug("added finalizer")
 
-	patch := client.MergeFrom(obj)
+	patch := client.MergeFrom(base)
 	err := c.client.Patch(ctx, obj, patch)
 	if err != nil {
 		return false, fmt.Errorf("failed patching metadata: %w", err)
@@ -58,6 +61,7 @@ func (c *Controller) resourceDelete(
 	desired types.Resource,
 ) (types.Resource, error) {
 	var err error
+	var latest types.Resource
 	log := ctrlreqlog.FromContext(ctx)
 	exit := log.Trace("resource.delete")
 	defer func() {
@@ -67,22 +71,22 @@ func (c *Controller) resourceDelete(
 	// Ask the associated Reconciler to clean up any externally-managed or
 	// owned child resources before we remove the finalizer on the supplied
 	// Resource which will complete the process of deletion.
-	err = c.r.ResourceDelete(ctx, desired)
-	if err != nil {
-		return nil, err
+	latest, err = c.r.ResourceDelete(ctx, desired)
+	if lo.IsNil(latest) || latest.ClientObject() == desired.ClientObject() {
+		// The Reconciler returned nothing, or returned `desired` itself. Use a
+		// copy so removing the finalizer below never mutates `desired`.
+		latest = desired.DeepCopy()
 	}
-
-	latest := desired.DeepCopy()
+	if err != nil {
+		return latest, err
+	}
 
 	fname := c.FinalizerName(desired)
 	obj := latest.ClientObject()
-	if !ctrlrtutil.ContainsFinalizer(obj, fname) {
-		// Nothing to do... resource already deleted.
-		return latest, nil
+	if ctrlrtutil.ContainsFinalizer(obj, fname) {
+		ctrlrtutil.RemoveFinalizer(obj, fname)
+		log.Debug("removed finalizer")
 	}
-	ctrlrtutil.RemoveFinalizer(obj, fname)
-	log.Debug("removed finalizer")
-
 	return latest, nil
 }
 
@@ -107,26 +111,27 @@ func (c *Controller) resourceConditionsSync(
 		exit(err)
 	}()
 
-	if errors.Is(reconcileErr, &ctrlerrors.TerminalError{}) {
+	var terminalErr *ctrlerrors.TerminalError
+	if errors.As(reconcileErr, &terminalErr) {
 		// If we got a terminal error while reconciling the resource, we set
 		// its Stalled condition to True to indicate that another reconcile
 		// will not change the status of the resource without a change to its
 		// desired state.
 		condition.SetStalled(
 			latest,
-			metav1.ConditionFalse,
-			"TerminalError",
+			metav1.ConditionTrue,
 			fmt.Sprintf(
 				"reconciliation encountered a terminal error: %s",
 				reconcileErr.Error(),
 			),
+			"TerminalError",
 		)
 	} else {
 		condition.SetStalled(
 			latest,
 			metav1.ConditionFalse,
-			"ReconcileSucceeded",
 			"reconcile succeeded",
+			"ReconcileSucceeded",
 		)
 	}
 }
@@ -169,13 +174,14 @@ func (c *Controller) resourceMetadataDifferent(
 			"failed getting clean metadata: %w", err,
 		)
 	}
+
 	bmd, err := resource.CleanMetadata(b)
 	if err != nil {
 		return false, fmt.Errorf(
 			"failed getting clean metadata: %w", err,
 		)
 	}
-	return maps.Equal(amd, bmd), nil
+	return !equality.Semantic.DeepEqual(amd, bmd), nil
 }
 
 // resourceMetadataPatch patches the metadata of the resource in the Kubernetes
