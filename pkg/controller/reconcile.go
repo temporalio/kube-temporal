@@ -131,68 +131,64 @@ func (c *Controller) reconcileResource(
 	return latest, nil
 }
 
-// reconcileComplete will handle errors from reconcile handlers, which
-// respects runtime errors.
+// reconcileComplete patches the latest state of the resource back to the
+// Kubernetes API and translates the reconcile error into a Result.
 //
 // `desired` is NEVER mutated by this method.
 // `latest` is NEVER mutated by this method.
 //
-// If the `latest` parameter is not nil, this function will ALWAYS patch the
-// latest Status fields back to the Kubernetes API.
+// If `latest` is not nil, its Status is ALWAYS patched, whether or not `err`
+// is nil, so conditions set during a long-running or failed reconcile are
+// saved. Its metadata is patched only when `err` is nil.
 func (c *Controller) reconcileComplete(
 	ctx context.Context,
 	desired types.Resource,
 	latest types.Resource,
 	err error,
 ) (ctrlrt.Result, error) {
-	if latest == nil {
-		// We don't requeue on a successful resource deletion.
-		return ctrlrt.Result{}, nil
-	}
-	if lo.IsNotNil(latest) {
-		// The reconciliation loop may have modified the resource's metadata --
-		// for example, by removing the finalizer when the resource was
-		// deleted.
-		//
-		// We check here to see if the metadata is different between the
-		// desired and latest and patch the metadata back to the Kubernetes API
-		// server if so.
+	if !lo.IsNil(latest) {
+		// Patch status before metadata: removing the last finalizer lets the
+		// API server delete the object, after which a status patch would fail.
+		// NotFound is ignored because the object may already be gone.
+		patchErr := c.resourceStatusPatch(ctx, desired, latest)
+		if patchErr != nil && !apierrors.IsNotFound(patchErr) {
+			return ctrlrt.Result{}, fmt.Errorf("failed patching status: %w", patchErr)
+		}
 		if err == nil {
-			diff, err := c.resourceMetadataDifferent(desired, latest)
-			if err != nil {
-				return ctrlrt.Result{}, err
+			diff, mdErr := c.resourceMetadataDifferent(desired, latest)
+			if mdErr != nil {
+				return ctrlrt.Result{}, mdErr
 			}
 			if diff {
-				_ = c.resourceMetadataPatch(ctx, desired, latest)
+				patchErr = c.resourceMetadataPatch(ctx, desired, latest)
+				if patchErr != nil && !apierrors.IsNotFound(patchErr) {
+					return ctrlrt.Result{}, fmt.Errorf("failed patching metadata: %w", patchErr)
+				}
 			}
 		}
-		// The reconciliation loop may have returned an error, but if latest is
-		// not nil, there may be some changes available in the CR's Status
-		// struct (example: Conditions), and we want to make sure we save those
-		// changes before proceeding.
-		//
-		// It is okay to patch status when resource is not present due to deletion
-		// because a NotFound error is thrown which will be ignored.
-		_ = c.resourceStatusPatch(ctx, desired, latest)
 	}
 
-	// By default, we requeue on success after a configurable time to keep
-	// resources in sync.
 	if err == nil {
+		if desired.IsBeingDeleted() {
+			// We don't requeue on a successful resource deletion.
+			return ctrlrt.Result{}, nil
+		}
+		// By default, we requeue on success after a configurable time to keep
+		// resources in sync.
 		return ctrlrt.Result{
 			RequeueAfter: c.cfg.Reconcile.RequeueOnSuccessDuration,
 		}, nil
 	}
 
-	if err != nil && errors.Is(err, &ctrlerrors.TerminalError{}) {
+	var terminalErr *ctrlerrors.TerminalError
+	if errors.As(err, &terminalErr) {
 		// We don't requeue on a terminal error.
 		return ctrlrt.Result{}, nil
 	}
 
 	var requeueNeededAfter *requeue.RequeueNeededAfter
 	if errors.As(err, &requeueNeededAfter) {
-		after := requeueNeededAfter.Duration()
-		return ctrlrt.Result{RequeueAfter: after}, nil
+		return ctrlrt.Result{RequeueAfter: requeueNeededAfter.Duration()}, nil
 	}
 
 	// The error returned by the reconciler may have indicated an immediate

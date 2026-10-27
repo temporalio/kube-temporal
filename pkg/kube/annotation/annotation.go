@@ -1,6 +1,7 @@
 package annotation
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
@@ -53,16 +54,17 @@ func Value(
 	search string,
 ) (string, bool) {
 	annos := subject.Annotations()
-	filtered := lo.FilterValues(
-		annos,
-		func(key string, _ string) bool {
+	keys := lo.Filter(
+		lo.Keys(annos),
+		func(key string, _ int) bool {
 			return strings.EqualFold(key, search)
 		},
 	)
-	if len(filtered) == 1 {
-		return filtered[0], true
+	if len(keys) == 0 {
+		return "", false
 	}
-	return "", false
+	slices.Sort(keys)
+	return annos[keys[0]], true
 }
 
 // HavingKeyPrefix returns Annotations whose key matches the supplied key

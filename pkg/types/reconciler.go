@@ -65,8 +65,19 @@ type Reconciler interface {
 	// finalizer on the associated [client.Object]. The Controller handles
 	// that. All the Reconciler needs to do is delete any owned resources or
 	// externally-managed resources associated with the supplied [Resource].
+	//
+	// This method returns a copy of the supplied [Resource] with any status
+	// mutations applied to the copy. If the external resource deletion
+	// operations are long-running or failed in a non-terminal fashion, the
+	// implementer should return a copy of the supplied [Resource] with
+	// any saved status mutations (for instance to the resource's Status.Conditions
+	// collection).
+	//
+	// `original` should NOT be mutated. The caller of `ResourceDelete` will consider
+	// the returned [Resource] as the latest observed state of the resource
+	// undergoing reconciliation.
 	ResourceDelete(
 		context.Context,
-		Resource,
-	) error
+		Resource, // original
+	) (Resource, error)
 }
