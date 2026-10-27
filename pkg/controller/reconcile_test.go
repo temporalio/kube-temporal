@@ -19,7 +19,6 @@ import (
 	"github.com/temporalio/kube-temporal/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlrtfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -134,8 +133,8 @@ func TestController_Reconcile_Delete(t *testing.T) {
 	cases := []struct {
 		name   string
 		obj    *tcorev1.Connection
-		setup  func(r *mock.Reconciler, cr types.Resource)
-		assert func(t *testing.T, r *mock.Reconciler, kc client.Client, cr types.Resource)
+		setup  func(r *mock.Reconciler, resFromRequest types.Resource)
+		assert func(t *testing.T, r *mock.Reconciler, kc client.Client, resFromRequest types.Resource)
 		exp    ctrlrt.Result
 	}{
 		{
@@ -153,11 +152,11 @@ func TestController_Reconcile_Delete(t *testing.T) {
 		{
 			name: "delete called when deletion ts",
 			obj:  newConnDeleted(),
-			setup: func(r *mock.Reconciler, cr types.Resource) {
-				r.On("ResourceDelete", tmock.Anything, cr).Return(cr, nil)
+			setup: func(r *mock.Reconciler, resFromRequest types.Resource) {
+				r.On("ResourceDelete", tmock.Anything, resFromRequest).Return(resFromRequest, nil)
 			},
-			assert: func(t *testing.T, r *mock.Reconciler, kc client.Client, cr types.Resource) {
-				r.AssertCalled(t, "ResourceDelete", tmock.Anything, cr)
+			assert: func(t *testing.T, r *mock.Reconciler, kc client.Client, resFromRequest types.Resource) {
+				r.AssertCalled(t, "ResourceDelete", tmock.Anything, resFromRequest)
 				// Removing the last finalizer lets the API server delete the
 				// object.
 				err := kc.Get(
@@ -172,18 +171,18 @@ func TestController_Reconcile_Delete(t *testing.T) {
 		{
 			name: "delete in progress keeps finalizer, saves status and requeues",
 			obj:  newConnDeleted(),
-			setup: func(r *mock.Reconciler, cr types.Resource) {
-				latest := cr.DeepCopy()
+			setup: func(r *mock.Reconciler, resFromRequest types.Resource) {
+				latest := resFromRequest.DeepCopy()
 				condition.SetReconciling(
 					latest, metav1.ConditionTrue, "deleting", "Deleting",
 				)
-				r.On("ResourceDelete", tmock.Anything, cr).Return(
+				r.On("ResourceDelete", tmock.Anything, resFromRequest).Return(
 					latest,
 					requeue.NeededAfter(errors.New("deleting"), 15*time.Second),
 				)
 			},
-			assert: func(t *testing.T, r *mock.Reconciler, kc client.Client, cr types.Resource) {
-				r.AssertCalled(t, "ResourceDelete", tmock.Anything, cr)
+			assert: func(t *testing.T, r *mock.Reconciler, kc client.Client, resFromRequest types.Resource) {
+				r.AssertCalled(t, "ResourceDelete", tmock.Anything, resFromRequest)
 				stored := getConnection(t, kc)
 				require.Contains(t, stored.Finalizers, testFinalizerName)
 				c := condition.Reconciling(fixtures.ResourceFromConnection(stored))
@@ -199,10 +198,7 @@ func TestController_Reconcile_Delete(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			require := require.New(tt)
 
-			scheme := runtime.NewScheme()
-			require.NoError(tcorev1.AddToScheme(scheme))
-			kc := ctrlrtfake.NewClientBuilder().
-				WithScheme(scheme).
+			kc := kube.NewFakeClientBuilder().
 				WithStatusSubresource(&tcorev1.Connection{}).
 				WithObjects(tc.obj).
 				Build()
@@ -215,16 +211,16 @@ func TestController_Reconcile_Delete(t *testing.T) {
 
 			// Read the object back so the resource carries the stored
 			// resourceVersion, as a real ResourceFromRequest would.
-			cr := fixtures.ResourceFromConnection(getConnection(tt, kc))
-			r.On("ResourceFromRequest", ctx, req).Return(cr, nil)
+			resFromRequest := fixtures.ResourceFromConnection(getConnection(tt, kc))
+			r.On("ResourceFromRequest", ctx, req).Return(resFromRequest, nil)
 			if tc.setup != nil {
-				tc.setup(r, cr)
+				tc.setup(r, resFromRequest)
 			}
 
 			got, err := c.Reconcile(ctx, req)
 			require.NoError(err)
 			require.EqualExportedValues(tc.exp, got)
-			tc.assert(tt, r, kc, cr)
+			tc.assert(tt, r, kc, resFromRequest)
 		})
 	}
 }
