@@ -13,7 +13,8 @@ const (
 )
 
 // NewController returns a new [controller.Controller] that uses the supplied
-// fake client/reader and mocked reconciler.
+// fake client/reader and mocked reconciler and enables debug logging using the
+// compact log format.
 func NewController(
 	cli client.Client,
 	reader client.Reader,
@@ -21,6 +22,8 @@ func NewController(
 ) *controller.Controller {
 	cfg := config.New()
 	cfg.SetDefaults()
+	cfg.Logging.Level = "debug"
+	cfg.Logging.Format = "compact"
 	return controller.New(
 		ControllerName, cfg, r,
 		controller.WithClient(cli),

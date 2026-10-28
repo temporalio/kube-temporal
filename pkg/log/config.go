@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
+	"github.com/temporalio/kube-temporal/pkg/log/compact"
+	"github.com/temporalio/kube-temporal/pkg/log/logfmt"
 )
 
 const (
@@ -73,12 +75,14 @@ func (c Config) Logger() *slog.Logger {
 	}
 	var handler slog.Handler
 	switch c.Format {
-	case "json":
-		handler = slog.NewJSONHandler(os.Stderr, opts)
+	case "logfmt":
+		handler = logfmt.NewHandler(os.Stderr, opts)
 	case "text":
 		handler = slog.NewTextHandler(os.Stderr, opts)
+	case "compact":
+		handler = compact.NewHandler(os.Stderr, opts)
 	default:
-		handler = &logfmtHandler{out: os.Stderr, opts: opts}
+		handler = slog.NewJSONHandler(os.Stderr, opts)
 	}
 	return slog.New(handler)
 }
