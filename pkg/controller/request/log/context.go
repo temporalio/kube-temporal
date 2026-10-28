@@ -19,7 +19,7 @@ func FromContext(ctx context.Context) *Logger {
 	if v := ctx.Value(contextKeyRequestLogger); v != nil {
 		return v.(*Logger)
 	}
-	return &Logger{logger: slog.New(slog.DiscardHandler)}
+	return nil
 }
 
 // ToContext ensures that a request logger adapted for the supplied

@@ -21,6 +21,9 @@ type Logger struct {
 // DebugEnabled returns true when the undelying logger is configured to write
 // debug messages, false otherwise.
 func (l *Logger) DebugEnabled() bool {
+	if l == nil {
+		return false
+	}
 	return l.logger.Enabled(context.Background(), slog.LevelDebug)
 }
 
@@ -29,7 +32,7 @@ func (l *Logger) Debug(
 	msg string,
 	args ...slog.Attr,
 ) {
-	if !l.DebugEnabled() {
+	if l == nil || !l.DebugEnabled() {
 		return
 	}
 	ctx := context.Background()
@@ -42,6 +45,9 @@ func (l *Logger) Info(
 	msg string,
 	args ...slog.Attr,
 ) {
+	if l == nil {
+		return
+	}
 	ctx := context.Background()
 	attrs := expandResourceFields(l.res, args...)
 	l.logger.LogAttrs(ctx, slog.LevelInfo, msg, attrs...)
@@ -52,7 +58,7 @@ func (l *Logger) Enter(
 	name string, // name of the function or code block we're entering
 	args ...slog.Attr,
 ) {
-	if !l.DebugEnabled() {
+	if l == nil || !l.DebugEnabled() {
 		return
 	}
 	ctx := context.Background()
@@ -69,7 +75,7 @@ func (l *Logger) Exit(
 	err error,
 	args ...slog.Attr,
 ) {
-	if !l.DebugEnabled() {
+	if l == nil || !l.DebugEnabled() {
 		return
 	}
 	ctx := context.Background()
@@ -89,6 +95,11 @@ func (l *Logger) Trace(
 	name string,
 	args ...slog.Attr,
 ) func(error, ...slog.Attr) {
+	if l == nil {
+		return func(error, ...slog.Attr) {
+			return
+		}
+	}
 	l.Enter(name, args...)
 	f := func(err error, args ...slog.Attr) {
 		l.Exit(name, err, args...)
