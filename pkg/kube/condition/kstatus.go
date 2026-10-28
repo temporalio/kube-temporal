@@ -5,6 +5,13 @@ import (
 	kstatus "sigs.k8s.io/cli-utils/pkg/kstatus/status"
 )
 
+const (
+	ReasonReconcileSucceeded = "ReconcileSucceeded"
+	ReasonInProgress         = "InProgress"
+	ReasonReconcileError     = "ReconcileError"
+	ReasonTerminalError      = "TerminalError"
+)
+
 // Reconciling returns the Condition in the resource's Conditions collection
 // that is of type kstatus.ConditionReconciling. If no such condition is found,
 // returns nil.

@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	"github.com/samber/lo"
-	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
-	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlrtutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	ctrlerrors "github.com/temporalio/kube-temporal/pkg/controller/errors"
 	ctrlreqlog "github.com/temporalio/kube-temporal/pkg/controller/request/log"
+	"github.com/temporalio/kube-temporal/pkg/controller/requeue"
+	"github.com/temporalio/kube-temporal/pkg/kube/condition"
 	"github.com/temporalio/kube-temporal/pkg/resource"
 	"github.com/temporalio/kube-temporal/pkg/types"
 )
@@ -112,11 +113,18 @@ func (c *Controller) resourceConditionsSync(
 	}()
 
 	var terminalErr *ctrlerrors.TerminalError
-	if errors.As(reconcileErr, &terminalErr) {
-		// If we got a terminal error while reconciling the resource, we set
-		// its Stalled condition to True to indicate that another reconcile
-		// will not change the status of the resource without a change to its
-		// desired state.
+	var requeueNeeded *requeue.RequeueNeeded
+	var requeueNeededAfter *requeue.RequeueNeededAfter
+
+	switch {
+	case reconcileErr == nil:
+		condition.SetStalled(
+			latest,
+			metav1.ConditionFalse,
+			"reconcile succeeded",
+			condition.ReasonReconcileSucceeded,
+		)
+	case errors.As(reconcileErr, &terminalErr):
 		condition.SetStalled(
 			latest,
 			metav1.ConditionTrue,
@@ -124,14 +132,35 @@ func (c *Controller) resourceConditionsSync(
 				"reconciliation encountered a terminal error: %s",
 				reconcileErr.Error(),
 			),
-			"TerminalError",
+			condition.ReasonTerminalError,
 		)
-	} else {
+	case errors.As(reconcileErr, &requeueNeeded),
+		errors.As(reconcileErr, &requeueNeededAfter):
+		condition.SetReconciling(
+			latest,
+			metav1.ConditionTrue,
+			reconcileErr.Error(),
+			condition.ReasonInProgress,
+		)
 		condition.SetStalled(
 			latest,
 			metav1.ConditionFalse,
-			"reconcile succeeded",
-			"ReconcileSucceeded",
+			"",
+			condition.ReasonInProgress,
+		)
+	default:
+		// Any other error is treated as transient.
+		condition.SetReconciling(
+			latest,
+			metav1.ConditionTrue,
+			reconcileErr.Error(),
+			condition.ReasonReconcileError,
+		)
+		condition.SetStalled(
+			latest,
+			metav1.ConditionFalse,
+			"",
+			condition.ReasonReconcileError,
 		)
 	}
 }
