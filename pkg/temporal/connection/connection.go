@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	tclient "go.temporal.io/sdk/client"
-)
 
-type TemporalClientDialFunc func(tclient.Options) (tclient.Client, error)
+	"github.com/temporalio/kube-temporal/pkg/temporal/connection/loader"
+)
 
 // Connection wraps a Temporal client struct with an ability to load the client
 // from various sources, including a Kubernetes Secret object or local files.
 type Connection struct {
 	tc     tclient.Client
-	loader *Loader
+	loader *loader.Loader
 }
 
 // Client returns the Temporal client associated with the Connection.
@@ -38,19 +38,19 @@ func (c *Connection) Client() (tclient.Client, error) {
 }
 
 // Loader returns the Loader associated with the Connection, if any.
-func (c *Connection) Loader() *Loader {
+func (c *Connection) Loader() *loader.Loader {
 	return c.loader
 }
 
 type newOptions struct {
-	loader *Loader
+	loader *loader.Loader
 }
 
 // NewOption allows modifying the returned Connection from New.
 type NewOption func(*Connection)
 
 // WithLoader modifies the Connection to use the supplied Loader.
-func WithLoader(loader Loader) NewOption {
+func WithLoader(loader loader.Loader) NewOption {
 	return func(c *Connection) {
 		c.loader = &loader
 	}

@@ -1,16 +1,14 @@
 package connection_test
 
 import (
-	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/temporalio/kube-temporal/pkg/temporal/connection"
+	"github.com/temporalio/kube-temporal/pkg/temporal/connection/loader"
+	tutmprl "github.com/temporalio/kube-temporal/pkg/testutil/temporal"
 	tclient "go.temporal.io/sdk/client"
-	tlog "go.temporal.io/sdk/log"
 )
-
-var noopLogger = tlog.NewStructuredLogger(slog.New(slog.DiscardHandler))
 
 type mockTClient struct {
 	tclient.Client
@@ -24,24 +22,24 @@ func mockTClientDialFunc(opts tclient.Options) (tclient.Client, error) {
 func TestNew(t *testing.T) {
 	tc, err := tclient.NewLazyClient(
 		tclient.Options{
-			Logger: noopLogger,
+			Logger: tutmprl.NewNoopLogger(),
 		},
 	)
 	require.Nil(t, err)
 
 	clientOpts := tclient.Options{}
 
-	loader := connection.NewLoader(
-		connection.WithTemporalClientLogger(noopLogger),
-		connection.WithTemporalClientDialFunc(mockTClientDialFunc),
-		connection.WithTemporalClientOptions(clientOpts),
+	ldr := loader.New(
+		loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+		loader.WithTemporalClientDialFunc(mockTClientDialFunc),
+		loader.WithTemporalClientOptions(clientOpts),
 	)
 
 	cases := []struct {
 		name      string
 		args      []connection.NewOption
 		expTC     tclient.Client
-		expLoader *connection.Loader
+		expLoader *loader.Loader
 		expErr    string
 	}{
 		{
@@ -53,7 +51,7 @@ func TestNew(t *testing.T) {
 			name: "fail if both loader and tclient provided",
 			args: []connection.NewOption{
 				connection.WithTemporalClient(tc),
-				connection.WithLoader(loader),
+				connection.WithLoader(ldr),
 			},
 			expErr: "either use WithLoader or WithTemporalClient",
 		},
@@ -68,10 +66,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "loader",
 			args: []connection.NewOption{
-				connection.WithLoader(loader),
+				connection.WithLoader(ldr),
 			},
 			expTC:     &mockTClient{Options: clientOpts},
-			expLoader: &loader,
+			expLoader: &ldr,
 		},
 	}
 	for _, tc := range cases {

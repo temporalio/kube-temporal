@@ -1,4 +1,4 @@
-package connection_test
+package loader_test
 
 import (
 	"context"
@@ -12,8 +12,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 	tcorev1 "github.com/temporalio/kube-temporal/api/core/v1"
-	"github.com/temporalio/kube-temporal/pkg/temporal/connection"
+	"github.com/temporalio/kube-temporal/pkg/temporal/connection/loader"
 	"github.com/temporalio/kube-temporal/pkg/testutil"
+	tutmprl "github.com/temporalio/kube-temporal/pkg/testutil/temporal"
 	"github.com/temporalio/kube-temporal/pkg/tlsutil"
 	tclient "go.temporal.io/sdk/client"
 	kcorev1 "k8s.io/api/core/v1"
@@ -59,7 +60,7 @@ var validClientKeyPair = sync.OnceValues(
 
 func newTCOptions() *tclient.Options {
 	return &tclient.Options{
-		Logger: noopLogger,
+		Logger: tutmprl.NewNoopLogger(),
 	}
 }
 
@@ -68,20 +69,20 @@ func TestLoader_ClientOptions(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		args   []connection.NewLoaderOption
+		args   []loader.NewOption
 		exp    *tclient.Options
 		expErr string
 	}{
 		{
 			name:   "fail if no connection spec or tclient opts",
-			args:   []connection.NewLoaderOption{},
+			args:   []loader.NewOption{},
 			expErr: "ConnectionSpec required",
 		},
 		{
 			name: "tclient opts override provided",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithTemporalClientOptions(*tcOpts),
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithTemporalClientOptions(*tcOpts),
 			},
 			exp: tcOpts,
 		},
@@ -89,7 +90,7 @@ func TestLoader_ClientOptions(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(tt *testing.T) {
 			require := require.New(tt)
-			loader := connection.NewLoader(tc.args...)
+			loader := loader.New(tc.args...)
 			got, err := loader.TemporalClientOptions()
 			if tc.expErr != "" {
 				require.ErrorContains(err, tc.expErr)
@@ -138,15 +139,15 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		args   []connection.NewLoaderOption
+		args   []loader.NewOption
 		exp    *tclient.Options
 		expErr string
 	}{
 		{
 			name: "empty spec yields default tclient opts",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{},
 				),
 			},
@@ -154,9 +155,9 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "specify only host port",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						HostPort: hostPort,
 					},
@@ -170,9 +171,9 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "specify only namespace",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Namespace: tns,
 					},
@@ -186,9 +187,9 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "specify tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -206,8 +207,8 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "fail if api key secret no kube client",
-			args: []connection.NewLoaderOption{
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							CACert: &tcorev1.CACertConfig{
@@ -226,11 +227,11 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "fail if tls CA cert secret no such secret",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							CACert: &tcorev1.CACertConfig{
@@ -249,11 +250,11 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "tls CA cert secret invalid cert",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(tlsCACertInvalidSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							CACert: &tcorev1.CACertConfig{
@@ -272,12 +273,12 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "tls CA cert opaque secret type",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(tlsCACertOpaqueSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							CACert: &tcorev1.CACertConfig{
@@ -302,12 +303,12 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 		},
 		{
 			name: "tls CA cert tls secret tpe",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(tlsCACertTLSSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							CACert: &tcorev1.CACertConfig{
@@ -338,7 +339,7 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(tt *testing.T) {
 			require := require.New(tt)
-			loader := connection.NewLoader(tc.args...)
+			loader := loader.New(tc.args...)
 			got, err := loader.TemporalClientOptions()
 			if tc.expErr != "" {
 				require.ErrorContains(err, tc.expErr)
@@ -365,7 +366,7 @@ type mockAPIKeyCreds struct {
 	key string
 }
 
-func newMockAPIKeyDynamicCredsFunc(key string) connection.NewAPIKeyDynamicCredentialsFunc {
+func newMockAPIKeyDynamicCredsFunc(key string) loader.NewAPIKeyDynamicCredentialsFunc {
 	return func(_ func(_ context.Context) (string, error)) tclient.Credentials {
 		return &mockAPIKeyCreds{key: key}
 	}
@@ -397,14 +398,14 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		args   []connection.NewLoaderOption
+		args   []loader.NewOption
 		exp    *tclient.Options
 		expErr string
 	}{
 		{
 			name: "fail if api key secret no kube client",
-			args: []connection.NewLoaderOption{
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -423,11 +424,11 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "fail if api key secret no such secret",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -446,15 +447,15 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "fail if api key secret no such secret in namespace",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeNamespace(kubeNamespace),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeNamespace(kubeNamespace),
+				loader.WithKubeClient(
 					// This is the non-namespaced secret, which should not
 					// match the lookup with the kubeNamespace override from
 					// the loader options.
 					kcrfake.NewFakeClient(apiKeySecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -473,15 +474,15 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "api key secret",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(apiKeySecret),
 				),
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -504,16 +505,16 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "api key secret in namespace",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeNamespace(kubeNamespace),
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeNamespace(kubeNamespace),
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(apiKeySecretWithNamespace),
 				),
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -536,15 +537,15 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "api key secret with tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(apiKeySecret),
 				),
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -573,11 +574,11 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "fail if api key path not found",
-			args: []connection.NewLoaderOption{
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+			args: []loader.NewOption{
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -591,12 +592,12 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "api key path",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							APIKey: &tcorev1.APIKeyCredentialsConfig{
@@ -614,12 +615,12 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		},
 		{
 			name: "api key path with tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithNewAPIKeyDynamicCredentialsFunc(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithNewAPIKeyDynamicCredentialsFunc(
 					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -645,7 +646,7 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(tt *testing.T) {
 			require := require.New(tt)
-			loader := connection.NewLoader(tc.args...)
+			loader := loader.New(tc.args...)
 			got, err := loader.TemporalClientOptions()
 			if tc.expErr != "" {
 				require.ErrorContains(err, tc.expErr)
@@ -721,14 +722,14 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 
 	cases := []struct {
 		name   string
-		args   []connection.NewLoaderOption
+		args   []loader.NewOption
 		exp    *tclient.Options
 		expErr string
 	}{
 		{
 			name: "fail if mtls key secret no kube client",
-			args: []connection.NewLoaderOption{
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -747,11 +748,11 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "fail if mtls key secret no such secret",
-			args: []connection.NewLoaderOption{
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -770,12 +771,12 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls opaque secret type",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(mtlsOpaqueSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -801,12 +802,12 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls opaque secret with tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(mtlsOpaqueSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -836,12 +837,12 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls tls secret type",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(mtlsTLSSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -871,12 +872,12 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls tls secret type with tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithKubeClient(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithKubeClient(
 					kcrfake.NewFakeClient(mtlsTLSSecret),
 				),
-				connection.WithConnectionSpec(
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -910,8 +911,8 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "fail if mtls paths not found",
-			args: []connection.NewLoaderOption{
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -927,9 +928,9 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls paths",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						Credentials: tcorev1.CredentialsConfig{
 							MutualTLS: &tcorev1.MutualTLSCredentialsConfig{
@@ -954,9 +955,9 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 		},
 		{
 			name: "mtls paths with tls server name",
-			args: []connection.NewLoaderOption{
-				connection.WithTemporalClientLogger(noopLogger),
-				connection.WithConnectionSpec(
+			args: []loader.NewOption{
+				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
+				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
 						TLS: tcorev1.ServerTLSConfig{
 							ServerName: tlsServerName,
@@ -987,7 +988,7 @@ func TestLoader_ClientOptions_ControllerSpec_MutualTLSCredentials(t *testing.T) 
 	for _, tc := range cases {
 		t.Run(tc.name, func(tt *testing.T) {
 			require := require.New(tt)
-			loader := connection.NewLoader(tc.args...)
+			loader := loader.New(tc.args...)
 			got, err := loader.TemporalClientOptions()
 			if tc.expErr != "" {
 				require.ErrorContains(err, tc.expErr)
