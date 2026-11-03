@@ -1,4 +1,4 @@
-package connection
+package loader
 
 import (
 	"context"
@@ -18,6 +18,8 @@ import (
 	tcorev1 "github.com/temporalio/kube-temporal/api/core/v1"
 	"github.com/temporalio/kube-temporal/pkg/tlsutil"
 )
+
+type TemporalClientDialFunc func(tclient.Options) (tclient.Client, error)
 
 // NOTE(jaypipes): This is needed in order to unit test the Temporal SDK
 // client.NewAPIKeyDynamicCredentials package-level function. Package-level
@@ -94,12 +96,12 @@ func (l *Loader) TemporalClientOptions() (*tclient.Options, error) {
 	})()
 }
 
-// NewLoaderOption allows modifying the Loader returned from NewLoader.
-type NewLoaderOption func(*Loader)
+// NewOption allows modifying the Loader returned from New.
+type NewOption func(*Loader)
 
 // WithKubeClient allows the caller to supply a Kubernetes client to use if
 // looking up credentials in Kubernetes Secrets or ConfigMaps.
-func WithKubeClient(kc kclient.Client) NewLoaderOption {
+func WithKubeClient(kc kclient.Client) NewOption {
 	return func(l *Loader) {
 		l.kc = kc
 	}
@@ -107,7 +109,7 @@ func WithKubeClient(kc kclient.Client) NewLoaderOption {
 
 // WithKubeNamespace allows the caller to supply a Kubernetes Namespace to use
 // if looking up credentials in Kubernetes Secrets or ConfigMaps.
-func WithKubeNamespace(ns string) NewLoaderOption {
+func WithKubeNamespace(ns string) NewOption {
 	return func(l *Loader) {
 		l.kns = ns
 	}
@@ -118,7 +120,7 @@ func WithKubeNamespace(ns string) NewLoaderOption {
 //
 // Useful for overriding the dialer behaviour to return a fake client in
 // testing. Defaults to Temporal sdkclient.Dial function.
-func WithTemporalClientDialFunc(fn TemporalClientDialFunc) NewLoaderOption {
+func WithTemporalClientDialFunc(fn TemporalClientDialFunc) NewOption {
 	return func(l *Loader) {
 		l.tcDialFunc = fn
 	}
@@ -126,7 +128,7 @@ func WithTemporalClientDialFunc(fn TemporalClientDialFunc) NewLoaderOption {
 
 // WithTemporalClientLogger allows the caller to supply a custom Temporal SDK
 // Logger to set in the client.Options.
-func WithTemporalClientLogger(logger tlog.Logger) NewLoaderOption {
+func WithTemporalClientLogger(logger tlog.Logger) NewOption {
 	return func(l *Loader) {
 		l.tcLogger = logger
 	}
@@ -134,7 +136,7 @@ func WithTemporalClientLogger(logger tlog.Logger) NewLoaderOption {
 
 // WithTemporalClientOptions allows the caller to override the Options supplied
 // to the Temporal Client dialer when constructing the Temporal Client.
-func WithTemporalClientOptions(tcOpts tclient.Options) NewLoaderOption {
+func WithTemporalClientOptions(tcOpts tclient.Options) NewOption {
 	return func(l *Loader) {
 		l.tcOpts = &tcOpts
 	}
@@ -143,7 +145,7 @@ func WithTemporalClientOptions(tcOpts tclient.Options) NewLoaderOption {
 // WithNewAPIKeyDynamicCredentialsFunc allows the caller to supply a function
 // to use in place of the Temporal sdkclient.NewAPIKeyDynamicCredentials
 // package-level function.
-func WithNewAPIKeyDynamicCredentialsFunc(fn NewAPIKeyDynamicCredentialsFunc) NewLoaderOption {
+func WithNewAPIKeyDynamicCredentialsFunc(fn NewAPIKeyDynamicCredentialsFunc) NewOption {
 	return func(l *Loader) {
 		l.tcNewAPIKeyDynamicCredentialsFunc = fn
 	}
@@ -152,15 +154,15 @@ func WithNewAPIKeyDynamicCredentialsFunc(fn NewAPIKeyDynamicCredentialsFunc) New
 // WithConnectionSpec sets the Loader's ConnectionSpec which informs the Loader
 // where to find various credentials and connectivity information for the
 // Temporal sdkclient.Client.
-func WithConnectionSpec(spec tcorev1.ConnectionSpec) NewLoaderOption {
+func WithConnectionSpec(spec tcorev1.ConnectionSpec) NewOption {
 	return func(l *Loader) {
 		l.connSpec = &spec
 	}
 }
 
-// NewLoader returns a Loader that knows how to load a Connection from a
+// New returns a Loader that knows how to load a Connection from a
 // variety of sources, including a ConnectionSpec.
-func NewLoader(opts ...NewLoaderOption) Loader {
+func New(opts ...NewOption) Loader {
 	l := Loader{}
 	for _, opt := range opts {
 		opt(&l)
