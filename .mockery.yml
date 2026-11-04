@@ -12,3 +12,11 @@ packages:
   github.com/temporalio/kube-temporal/pkg/types:
     config:
       all: false # only generate the interfaces that are annotated with mockery:generate: true
+  go.temporal.io/sdk/client:
+    interfaces:
+      Client:
+        config:
+          dir: pkg/testutil/mock
+          filename: "temporal_sdk_client.go"
+          pkgname: mock
+          structname: TemporalClient

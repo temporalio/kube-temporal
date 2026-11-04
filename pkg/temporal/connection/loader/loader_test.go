@@ -1,7 +1,6 @@
 package loader_test
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -361,17 +360,6 @@ func TestLoader_ClientOptions_ControllerSpec_NoCredentials(t *testing.T) {
 	}
 }
 
-type mockAPIKeyCreds struct {
-	tclient.Credentials
-	key string
-}
-
-func newMockAPIKeyDynamicCredsFunc(key string) loader.NewAPIKeyDynamicCredentialsFunc {
-	return func(_ func(_ context.Context) (string, error)) tclient.Credentials {
-		return &mockAPIKeyCreds{key: key}
-	}
-}
-
 func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 	apiKeySecretName := "api-key-secret-name"
 	apiKeySecretDataKey := "api-key-secret-data-key"
@@ -383,7 +371,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 		apiKeySecretDataKey: []byte(apiKeySecretDataValue),
 	}
 
-	apiKeySecretCreds := &mockAPIKeyCreds{key: apiKeySecretDataValue}
+	apiKeySecretCreds := &tutmprl.TrackingAPIKeyDynamicCredentials{
+		Value: apiKeySecretDataValue,
+	}
 
 	apiKeySecretWithNamespace := &kcorev1.Secret{}
 	apiKeySecretWithNamespace.Name = apiKeySecretName
@@ -394,7 +384,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 
 	apiKeyPath := t.TempDir()
 
-	apiKeyPathCreds := &mockAPIKeyCreds{key: apiKeyPath}
+	apiKeyPathCreds := &tutmprl.TrackingAPIKeyDynamicCredentials{
+		Value: apiKeyPath,
+	}
 
 	cases := []struct {
 		name   string
@@ -480,7 +472,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 					kcrfake.NewFakeClient(apiKeySecret),
 				),
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeySecretDataValue,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
@@ -512,7 +506,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 					kcrfake.NewFakeClient(apiKeySecretWithNamespace),
 				),
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeySecretDataValue,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
@@ -543,7 +539,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 					kcrfake.NewFakeClient(apiKeySecret),
 				),
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeySecretDataValue),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeySecretDataValue,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
@@ -576,7 +574,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 			name: "fail if api key path not found",
 			args: []loader.NewOption{
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeyPath,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
@@ -595,7 +595,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 			args: []loader.NewOption{
 				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeyPath,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{
@@ -618,7 +620,9 @@ func TestLoader_ClientOptions_ControllerSpec_APIKeyCredentials(t *testing.T) {
 			args: []loader.NewOption{
 				loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
 				loader.WithNewAPIKeyDynamicCredentialsFunc(
-					newMockAPIKeyDynamicCredsFunc(apiKeyPath),
+					tutmprl.NewTrackingAPIKeyDynamicCredentialsFunc(
+						apiKeyPath,
+					),
 				),
 				loader.WithConnectionSpec(
 					tcorev1.ConnectionSpec{

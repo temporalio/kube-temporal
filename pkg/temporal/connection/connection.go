@@ -3,10 +3,32 @@ package connection
 import (
 	"fmt"
 
+	tcorev1 "github.com/temporalio/kube-temporal/api/core/v1"
 	tclient "go.temporal.io/sdk/client"
 
 	"github.com/temporalio/kube-temporal/pkg/temporal/connection/loader"
 )
+
+// HostPort is a specialized string type containing the <host>:<port> target
+// address to which a client connects.
+type HostPort string
+
+// HostPortNamespace contains a HostPort and a Temporal Namespace.
+type HostPortNamespace struct {
+	HostPort  HostPort
+	Namespace string
+}
+
+func (hpns *HostPortNamespace) SetDefaults() {
+	if hpns.HostPort == "" {
+		hpns.HostPort = HostPort(
+			tcorev1.DefaultTemporalConnectionHostPort,
+		)
+	}
+	if hpns.Namespace == "" {
+		hpns.Namespace = tcorev1.DefaultTemporalNamespace
+	}
+}
 
 // Connection wraps a Temporal client struct with an ability to load the client
 // from various sources, including a Kubernetes Secret object or local files.

@@ -10,15 +10,6 @@ import (
 	tclient "go.temporal.io/sdk/client"
 )
 
-type mockTClient struct {
-	tclient.Client
-	Options tclient.Options
-}
-
-func mockTClientDialFunc(opts tclient.Options) (tclient.Client, error) {
-	return &mockTClient{Options: opts}, nil
-}
-
 func TestNew(t *testing.T) {
 	tc, err := tclient.NewLazyClient(
 		tclient.Options{
@@ -31,7 +22,7 @@ func TestNew(t *testing.T) {
 
 	ldr := loader.New(
 		loader.WithTemporalClientLogger(tutmprl.NewNoopLogger()),
-		loader.WithTemporalClientDialFunc(mockTClientDialFunc),
+		loader.WithTemporalClientDialFunc(tutmprl.NewTrackingClientDialFunc),
 		loader.WithTemporalClientOptions(clientOpts),
 	)
 
@@ -68,7 +59,7 @@ func TestNew(t *testing.T) {
 			args: []connection.NewOption{
 				connection.WithLoader(ldr),
 			},
-			expTC:     &mockTClient{Options: clientOpts},
+			expTC:     &tutmprl.TrackingClient{Options: clientOpts},
 			expLoader: &ldr,
 		},
 	}
