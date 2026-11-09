@@ -16,7 +16,7 @@ const (
 
 // LogValue returns the standardized [slog.LogValue] for the supplied
 // [types.Resource].
-func LogValue(r types.Resource) slog.Value {
+func LogValue(r types.HasClientObject) slog.Value {
 	co := r.ClientObject()
 	name := co.GetName()
 	ns := co.GetNamespace()

@@ -12,7 +12,7 @@ import (
 //
 // Note that the matching on Condition type is case-insensitive.
 func FirstOfType(
-	subject Manager,
+	subject HasConditions,
 	condType fmt.Stringer,
 ) *metav1.Condition {
 	for _, condition := range subject.Conditions() {
@@ -28,7 +28,7 @@ func FirstOfType(
 //
 // Note that the matching on Condition type is case-insensitive.
 func AllOfType(
-	subject Manager,
+	subject HasConditions,
 	condType fmt.Stringer,
 ) []*metav1.Condition {
 	res := []*metav1.Condition{}

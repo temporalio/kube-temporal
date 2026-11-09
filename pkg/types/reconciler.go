@@ -33,21 +33,34 @@ type Reconciler interface {
 		ctrlrt.Request,
 	) (Resource, error)
 
-	// ResourceSetLatest mutates the supplied [Resource] with the latest
+	// ResourceLatest returns a copy of the supplied [Resource] with the latest
 	// observed state of the externally-managed resource.
 	//
-	// Any error returned from this function is considered a runtime error and
+	// The supplied Resource has its Status.Conditions already cleared by the
+	// caller. Implementations MUST build the returned copy from it (e.g. via
+	// DeepCopy) and MUST NOT reintroduce conditions from any other source.
+	//
+	// `current` is NEVER mutated.
+	//
+	// Any error returned from this function is considered a terminal error and
 	// will cause the resource to contain a Stalled Condition with Status=True.
-	ResourceSetLatest(
+	ResourceLatest(
 		context.Context,
-		Resource, // callers expected to mutate this parameter
-	) error
+		Resource, // current resource read from ResourceFromRequest
+	) (Resource, error)
 
 	// ResourceSync synchronizes any managed resources to match the supplied
 	// desired [Resource] state.
 	//
-	// Returns nil when the synchronization was successful, otherwise returns
-	// an error derived from `pkg/controller/errors.ErrResourceSync`.
+	// Returns a copy of latest updated with any annotations or status fields
+	// that ResourceSync may have changed.
+	//
+	// IMPORTANT: When an error is returned, the returned Resource copy may
+	// have been updated to include a condition that the user may inspect to
+	// determine how to proceed with fixing a broken Resource. The caller
+	// should always save the metadata and status of the returned Resource back
+	// to the Kubernetes API server regardless of whether an error was
+	// returned.
 	//
 	// `desired` is NEVER mutated.
 	// `latest` is NEVER mutated.
@@ -58,7 +71,7 @@ type Reconciler interface {
 		context.Context,
 		Resource, // desired
 		Resource, // latest
-	) error
+	) (Resource, error)
 
 	// ResourceDelete deletes any managed external resources for the supplied
 	// [Resource]. Note that the Reconciler does NOT need to remove the
@@ -73,9 +86,9 @@ type Reconciler interface {
 	// any saved status mutations (for instance to the resource's Status.Conditions
 	// collection).
 	//
-	// `original` should NOT be mutated. The caller of `ResourceDelete` will consider
-	// the returned [Resource] as the latest observed state of the resource
-	// undergoing reconciliation.
+	// `original` is NEVER mutated. The caller of `ResourceDelete` should
+	// consider the returned [Resource] as the latest observed state of the
+	// resource undergoing reconciliation.
 	ResourceDelete(
 		context.Context,
 		Resource, // original

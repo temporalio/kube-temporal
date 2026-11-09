@@ -230,36 +230,47 @@ func (_c *Reconciler_ResourceFromRequest_Call) RunAndReturn(run func(context1 co
 	return _c
 }
 
-// ResourceSetLatest provides a mock function for the type Reconciler
-func (_mock *Reconciler) ResourceSetLatest(context1 context.Context, resource types.Resource) error {
+// ResourceLatest provides a mock function for the type Reconciler
+func (_mock *Reconciler) ResourceLatest(context1 context.Context, resource types.Resource) (types.Resource, error) {
 	ret := _mock.Called(context1, resource)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ResourceSetLatest")
+		panic("no return value specified for ResourceLatest")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) error); ok {
+	var r0 types.Resource
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) (types.Resource, error)); ok {
+		return returnFunc(context1, resource)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource) types.Resource); ok {
 		r0 = returnFunc(context1, resource)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Resource)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, types.Resource) error); ok {
+		r1 = returnFunc(context1, resource)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// Reconciler_ResourceSetLatest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceSetLatest'
-type Reconciler_ResourceSetLatest_Call struct {
+// Reconciler_ResourceLatest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceLatest'
+type Reconciler_ResourceLatest_Call struct {
 	*mock.Call
 }
 
-// ResourceSetLatest is a helper method to define mock.On call
+// ResourceLatest is a helper method to define mock.On call
 //   - context1 context.Context
 //   - resource types.Resource
-func (_e *Reconciler_Expecter) ResourceSetLatest(context1 interface{}, resource interface{}) *Reconciler_ResourceSetLatest_Call {
-	return &Reconciler_ResourceSetLatest_Call{Call: _e.mock.On("ResourceSetLatest", context1, resource)}
+func (_e *Reconciler_Expecter) ResourceLatest(context1 interface{}, resource interface{}) *Reconciler_ResourceLatest_Call {
+	return &Reconciler_ResourceLatest_Call{Call: _e.mock.On("ResourceLatest", context1, resource)}
 }
 
-func (_c *Reconciler_ResourceSetLatest_Call) Run(run func(context1 context.Context, resource types.Resource)) *Reconciler_ResourceSetLatest_Call {
+func (_c *Reconciler_ResourceLatest_Call) Run(run func(context1 context.Context, resource types.Resource)) *Reconciler_ResourceLatest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -277,31 +288,42 @@ func (_c *Reconciler_ResourceSetLatest_Call) Run(run func(context1 context.Conte
 	return _c
 }
 
-func (_c *Reconciler_ResourceSetLatest_Call) Return(err error) *Reconciler_ResourceSetLatest_Call {
-	_c.Call.Return(err)
+func (_c *Reconciler_ResourceLatest_Call) Return(resource1 types.Resource, err error) *Reconciler_ResourceLatest_Call {
+	_c.Call.Return(resource1, err)
 	return _c
 }
 
-func (_c *Reconciler_ResourceSetLatest_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource) error) *Reconciler_ResourceSetLatest_Call {
+func (_c *Reconciler_ResourceLatest_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource) (types.Resource, error)) *Reconciler_ResourceLatest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ResourceSync provides a mock function for the type Reconciler
-func (_mock *Reconciler) ResourceSync(context1 context.Context, resource types.Resource, resource1 types.Resource) error {
+func (_mock *Reconciler) ResourceSync(context1 context.Context, resource types.Resource, resource1 types.Resource) (types.Resource, error) {
 	ret := _mock.Called(context1, resource, resource1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResourceSync")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource, types.Resource) error); ok {
+	var r0 types.Resource
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource, types.Resource) (types.Resource, error)); ok {
+		return returnFunc(context1, resource, resource1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, types.Resource, types.Resource) types.Resource); ok {
 		r0 = returnFunc(context1, resource, resource1)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Resource)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, types.Resource, types.Resource) error); ok {
+		r1 = returnFunc(context1, resource, resource1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Reconciler_ResourceSync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceSync'
@@ -340,12 +362,12 @@ func (_c *Reconciler_ResourceSync_Call) Run(run func(context1 context.Context, r
 	return _c
 }
 
-func (_c *Reconciler_ResourceSync_Call) Return(err error) *Reconciler_ResourceSync_Call {
-	_c.Call.Return(err)
+func (_c *Reconciler_ResourceSync_Call) Return(resource2 types.Resource, err error) *Reconciler_ResourceSync_Call {
+	_c.Call.Return(resource2, err)
 	return _c
 }
 
-func (_c *Reconciler_ResourceSync_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource, resource1 types.Resource) error) *Reconciler_ResourceSync_Call {
+func (_c *Reconciler_ResourceSync_Call) RunAndReturn(run func(context1 context.Context, resource types.Resource, resource1 types.Resource) (types.Resource, error)) *Reconciler_ResourceSync_Call {
 	_c.Call.Return(run)
 	return _c
 }
