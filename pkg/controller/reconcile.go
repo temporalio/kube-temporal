@@ -98,15 +98,16 @@ func (c *Controller) reconcileResource(
 
 	// We clear the resource's Conditions collection at the start of each
 	// reconcile loop to ensure that the Status.Conditions always contains the
-	// freshest indication of current state.
+	// freshest indication of current state. ResourceLatest builds its returned
+	// copy from this cleared resource, so stale conditions never carry forward.
 	condition.Clear(latest)
 	defer func() {
 		c.resourceConditionsSync(ctx, latest, err)
 	}()
 
-	// The derived Controller is responsible for fetching the latest observed
-	// state for our resource and mutating it accordingly.
-	latest, err = c.r.ResourceLatest(ctx, desired)
+	// The derived Controller is responsible for returning a copy of the
+	// supplied resource updated with the latest observed external state.
+	latest, err = c.r.ResourceLatest(ctx, latest)
 	if err != nil {
 		return latest, err
 	}
@@ -123,7 +124,8 @@ func (c *Controller) reconcileResource(
 
 	log.Debug("detected difference in desired state")
 
-	return c.r.ResourceSync(ctx, desired, latest)
+	latest, err = c.r.ResourceSync(ctx, desired, latest)
+	return latest, err
 }
 
 // reconcileComplete patches the latest state of the resource back to the

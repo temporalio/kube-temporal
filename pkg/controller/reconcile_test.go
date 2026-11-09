@@ -224,6 +224,75 @@ func TestController_Reconcile_Delete(t *testing.T) {
 	}
 }
 
+// TestController_Reconcile_ResourceLatestConditionsCleared verifies that the
+// Controller clears the resource's conditions before handing it to
+// ResourceLatest, so stale conditions from a previous reconcile loop never
+// carry forward.
+func TestController_Reconcile_ResourceLatestConditionsCleared(t *testing.T) {
+	require := require.New(t)
+
+	const staleType = "StaleTestCondition"
+
+	// The resource already has the Controller's finalizer, so reconciliation
+	// proceeds past the finalizer step, and it carries a condition left over
+	// from a previous reconcile loop.
+	obj := fixtures.NewConnection(
+		testResourceName,
+		fixtures.ConnectionWithKubeNamespace(testKubeNamespace),
+	)
+	obj.SetFinalizer(testFinalizerName)
+	obj.ReplaceConditions([]*metav1.Condition{{
+		Type:               staleType,
+		Status:             metav1.ConditionTrue,
+		Reason:             "Stale",
+		Message:            "left over from a previous reconcile",
+		LastTransitionTime: metav1.Now(),
+	}})
+
+	kc := kube.NewFakeClientBuilder().
+		WithStatusSubresource(&tcorev1.Connection{}).
+		WithObjects(obj.ClientObject()).
+		Build()
+
+	r := new(mock.Reconciler)
+	r.On("SetConfig", tmock.Anything)
+	c := testutil.NewController(kc, kc, r)
+	ctx := context.TODO()
+	req := kube.NewResourceRequest(testKubeNamespace, testResourceName)
+
+	resFromRequest := fixtures.ResourceFromConnection(getConnection(t, kc))
+	require.Len(resFromRequest.Conditions(), 1)
+	r.On("ResourceFromRequest", ctx, req).Return(resFromRequest, nil)
+
+	var gotLatestArg types.Resource
+	r.EXPECT().ResourceLatest(tmock.Anything, tmock.Anything).RunAndReturn(
+		func(_ context.Context, current types.Resource) (types.Resource, error) {
+			gotLatestArg = current
+			return current.DeepCopy(), nil
+		},
+	)
+	r.EXPECT().ResourceSync(tmock.Anything, tmock.Anything, tmock.Anything).RunAndReturn(
+		func(_ context.Context, _, latest types.Resource) (types.Resource, error) {
+			return latest.DeepCopy(), nil
+		},
+	)
+
+	_, err := c.Reconcile(ctx, req)
+	require.NoError(err)
+
+	// ResourceLatest received a resource with no conditions.
+	require.NotNil(gotLatestArg)
+	require.Empty(gotLatestArg.Conditions())
+
+	// The resource read from the request was not mutated.
+	require.Len(resFromRequest.Conditions(), 1)
+
+	// The stale condition was not saved back to the API server.
+	for _, cond := range getConnection(t, kc).Status.Conditions {
+		require.NotEqual(staleType, cond.Type)
+	}
+}
+
 // getConnection returns the test Connection stored in the fake client.
 func getConnection(t *testing.T, kc client.Client) *tcorev1.Connection {
 	t.Helper()

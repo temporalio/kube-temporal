@@ -36,6 +36,10 @@ type Reconciler interface {
 	// ResourceLatest returns a copy of the supplied [Resource] with the latest
 	// observed state of the externally-managed resource.
 	//
+	// The supplied Resource has its Status.Conditions already cleared by the
+	// caller. Implementations MUST build the returned copy from it (e.g. via
+	// DeepCopy) and MUST NOT reintroduce conditions from any other source.
+	//
 	// `current` is NEVER mutated.
 	//
 	// Any error returned from this function is considered a terminal error and
