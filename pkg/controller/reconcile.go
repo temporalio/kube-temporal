@@ -111,6 +111,18 @@ func (c *Controller) reconcileResource(
 		return latest, err
 	}
 
+	// If an external system assigns the resource identity on creation,
+	// implement types.ResourceCreator to capture that from the response.
+	if rc, ok := c.r.(types.ResourceCreator); ok && !rc.ResourceExists(latest) {
+		log.Debug("resource does not exist, creating it")
+		var created types.Resource
+		created, err = rc.ResourceCreate(ctx, desired, latest)
+		if !lo.IsNil(created) {
+			latest = created
+		}
+		return latest, err
+	}
+
 	// TODO(jaypipes): Use a friendlier delta library that allows us to log the
 	// differences between two [types.Resource] instead of just whether they
 	// are semantically the same.

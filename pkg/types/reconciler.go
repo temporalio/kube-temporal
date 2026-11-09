@@ -81,3 +81,24 @@ type Reconciler interface {
 		Resource, // original
 	) (Resource, error)
 }
+
+// ResourceCreator is optionally implemented by a [Reconciler] whose [Resource]
+// is assigned an identity by an external API when it is first created.
+type ResourceCreator interface {
+	// ResourceExists reports whether the external resource pointed to by
+	// [Resource] has already been created or not.
+	ResourceExists(
+		Resource, // latest
+	) bool
+
+	// ResourceCreate creates the external resource pointed to by [Resource]
+	// and returns a copy of `latest` with the identity the external system assigned.
+	//
+	// `desired` should NOT be mutated.
+	// `latest` should NOT be mutated.
+	ResourceCreate(
+		context.Context,
+		Resource, // desired
+		Resource, // latest
+	) (Resource, error)
+}
