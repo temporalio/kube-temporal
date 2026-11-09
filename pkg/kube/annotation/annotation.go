@@ -14,7 +14,7 @@ type Annotations map[string]string
 //
 // Note that the matching on Condition type is case-insensitive.
 func HasKey(
-	subject Manager,
+	subject HasAnnotations,
 	search string,
 ) bool {
 	keys := lo.Keys(subject.Annotations())
@@ -31,7 +31,7 @@ func HasKey(
 //
 // Note that the matching on Condition type is case-insensitive.
 func HasKeyPrefix(
-	subject Manager,
+	subject HasAnnotations,
 	search string,
 ) bool {
 	search = strings.ToLower(search)
@@ -50,7 +50,7 @@ func HasKeyPrefix(
 //
 // Note that the matching on Condition type is case-insensitive.
 func Value(
-	subject Manager,
+	subject HasAnnotations,
 	search string,
 ) (string, bool) {
 	annos := subject.Annotations()
@@ -72,7 +72,7 @@ func Value(
 //
 // Note that the matching on Condition type is case-insensitive.
 func HavingKeyPrefix(
-	subject Manager,
+	subject HasAnnotations,
 	search string,
 ) Annotations {
 	search = strings.ToLower(search)

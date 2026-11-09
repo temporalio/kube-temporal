@@ -6,6 +6,7 @@ package mock
 
 import (
 	"log/slog"
+	"time"
 
 	mock "github.com/stretchr/testify/mock"
 	"github.com/temporalio/kube-temporal/pkg/kube/annotation"
@@ -274,6 +275,52 @@ func (_c *Resource_DeepCopy_Call) RunAndReturn(run func() types.Resource) *Resou
 	return _c
 }
 
+// Finalizers provides a mock function for the type Resource
+func (_mock *Resource) Finalizers() []string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Finalizers")
+	}
+
+	var r0 []string
+	if returnFunc, ok := ret.Get(0).(func() []string); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	return r0
+}
+
+// Resource_Finalizers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Finalizers'
+type Resource_Finalizers_Call struct {
+	*mock.Call
+}
+
+// Finalizers is a helper method to define mock.On call
+func (_e *Resource_Expecter) Finalizers() *Resource_Finalizers_Call {
+	return &Resource_Finalizers_Call{Call: _e.mock.On("Finalizers")}
+}
+
+func (_c *Resource_Finalizers_Call) Run(run func()) *Resource_Finalizers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Resource_Finalizers_Call) Return(strings []string) *Resource_Finalizers_Call {
+	_c.Call.Return(strings)
+	return _c
+}
+
+func (_c *Resource_Finalizers_Call) RunAndReturn(run func() []string) *Resource_Finalizers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GroupVersionKind provides a mock function for the type Resource
 func (_mock *Resource) GroupVersionKind() schema.GroupVersionKind {
 	ret := _mock.Called()
@@ -486,6 +533,46 @@ func (_c *Resource_ReplaceConditions_Call) RunAndReturn(run func(conditions []*v
 	return _c
 }
 
+// ReplaceFinalizers provides a mock function for the type Resource
+func (_mock *Resource) ReplaceFinalizers(strings []string) {
+	_mock.Called(strings)
+	return
+}
+
+// Resource_ReplaceFinalizers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReplaceFinalizers'
+type Resource_ReplaceFinalizers_Call struct {
+	*mock.Call
+}
+
+// ReplaceFinalizers is a helper method to define mock.On call
+//   - strings []string
+func (_e *Resource_Expecter) ReplaceFinalizers(strings interface{}) *Resource_ReplaceFinalizers_Call {
+	return &Resource_ReplaceFinalizers_Call{Call: _e.mock.On("ReplaceFinalizers", strings)}
+}
+
+func (_c *Resource_ReplaceFinalizers_Call) Run(run func(strings []string)) *Resource_ReplaceFinalizers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 []string
+		if args[0] != nil {
+			arg0 = args[0].([]string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Resource_ReplaceFinalizers_Call) Return() *Resource_ReplaceFinalizers_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Resource_ReplaceFinalizers_Call) RunAndReturn(run func(strings []string)) *Resource_ReplaceFinalizers_Call {
+	_c.Run(run)
+	return _c
+}
+
 // RuntimeObject provides a mock function for the type Resource
 func (_mock *Resource) RuntimeObject() runtime.Object {
 	ret := _mock.Called()
@@ -529,6 +616,132 @@ func (_c *Resource_RuntimeObject_Call) Return(object runtime.Object) *Resource_R
 
 func (_c *Resource_RuntimeObject_Call) RunAndReturn(run func() runtime.Object) *Resource_RuntimeObject_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// SetAnnotation provides a mock function for the type Resource
+func (_mock *Resource) SetAnnotation(s string, s1 string) {
+	_mock.Called(s, s1)
+	return
+}
+
+// Resource_SetAnnotation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetAnnotation'
+type Resource_SetAnnotation_Call struct {
+	*mock.Call
+}
+
+// SetAnnotation is a helper method to define mock.On call
+//   - s string
+//   - s1 string
+func (_e *Resource_Expecter) SetAnnotation(s interface{}, s1 interface{}) *Resource_SetAnnotation_Call {
+	return &Resource_SetAnnotation_Call{Call: _e.mock.On("SetAnnotation", s, s1)}
+}
+
+func (_c *Resource_SetAnnotation_Call) Run(run func(s string, s1 string)) *Resource_SetAnnotation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Resource_SetAnnotation_Call) Return() *Resource_SetAnnotation_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Resource_SetAnnotation_Call) RunAndReturn(run func(s string, s1 string)) *Resource_SetAnnotation_Call {
+	_c.Run(run)
+	return _c
+}
+
+// SetDeletionTimestamp provides a mock function for the type Resource
+func (_mock *Resource) SetDeletionTimestamp(time1 time.Time) {
+	_mock.Called(time1)
+	return
+}
+
+// Resource_SetDeletionTimestamp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetDeletionTimestamp'
+type Resource_SetDeletionTimestamp_Call struct {
+	*mock.Call
+}
+
+// SetDeletionTimestamp is a helper method to define mock.On call
+//   - time1 time.Time
+func (_e *Resource_Expecter) SetDeletionTimestamp(time1 interface{}) *Resource_SetDeletionTimestamp_Call {
+	return &Resource_SetDeletionTimestamp_Call{Call: _e.mock.On("SetDeletionTimestamp", time1)}
+}
+
+func (_c *Resource_SetDeletionTimestamp_Call) Run(run func(time1 time.Time)) *Resource_SetDeletionTimestamp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 time.Time
+		if args[0] != nil {
+			arg0 = args[0].(time.Time)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Resource_SetDeletionTimestamp_Call) Return() *Resource_SetDeletionTimestamp_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Resource_SetDeletionTimestamp_Call) RunAndReturn(run func(time1 time.Time)) *Resource_SetDeletionTimestamp_Call {
+	_c.Run(run)
+	return _c
+}
+
+// SetFinalizer provides a mock function for the type Resource
+func (_mock *Resource) SetFinalizer(s string) {
+	_mock.Called(s)
+	return
+}
+
+// Resource_SetFinalizer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetFinalizer'
+type Resource_SetFinalizer_Call struct {
+	*mock.Call
+}
+
+// SetFinalizer is a helper method to define mock.On call
+//   - s string
+func (_e *Resource_Expecter) SetFinalizer(s interface{}) *Resource_SetFinalizer_Call {
+	return &Resource_SetFinalizer_Call{Call: _e.mock.On("SetFinalizer", s)}
+}
+
+func (_c *Resource_SetFinalizer_Call) Run(run func(s string)) *Resource_SetFinalizer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Resource_SetFinalizer_Call) Return() *Resource_SetFinalizer_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Resource_SetFinalizer_Call) RunAndReturn(run func(s string)) *Resource_SetFinalizer_Call {
+	_c.Run(run)
 	return _c
 }
 

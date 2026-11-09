@@ -114,25 +114,24 @@ func TestController_Reconcile_ResourceFromRequest(t *testing.T) {
 const testFinalizerName = "connection.core.temporal.io/finalizer"
 
 func TestController_Reconcile_Delete(t *testing.T) {
-	newConn := func() *tcorev1.Connection {
+	newConn := func() types.Resource {
 		return fixtures.NewConnection(
 			testResourceName,
 			fixtures.ConnectionWithKubeNamespace(testKubeNamespace),
 		)
 	}
-	newConnDeleted := func() *tcorev1.Connection {
-		c := newConn()
-		delTime := metav1.NewTime(time.Now())
-		c.DeletionTimestamp = &delTime
+	newConnDeleted := func() types.Resource {
+		r := newConn()
+		r.SetDeletionTimestamp(time.Now())
 		// The fake client refuses objects with a deletion timestamp and no
 		// finalizers. A resource being deleted has the Controller's finalizer.
-		c.Finalizers = []string{testFinalizerName}
-		return c
+		r.SetFinalizer(testFinalizerName)
+		return r
 	}
 
 	cases := []struct {
 		name   string
-		obj    *tcorev1.Connection
+		obj    types.Resource
 		setup  func(r *mock.Reconciler, resFromRequest types.Resource)
 		assert func(t *testing.T, r *mock.Reconciler, kc client.Client, resFromRequest types.Resource)
 		exp    ctrlrt.Result
@@ -144,7 +143,7 @@ func TestController_Reconcile_Delete(t *testing.T) {
 				r.AssertNotCalled(t, "ResourceDelete", tmock.Anything, tmock.Anything)
 				// The Controller adds its finalizer and requeues before it
 				// reads the latest state.
-				r.AssertNotCalled(t, "ResourceSetLatest", tmock.Anything, tmock.Anything)
+				r.AssertNotCalled(t, "ResourceLatest", tmock.Anything, tmock.Anything)
 				require.Contains(t, getConnection(t, kc).Finalizers, testFinalizerName)
 			},
 			exp: ctrlrt.Result{Requeue: true},
@@ -200,7 +199,7 @@ func TestController_Reconcile_Delete(t *testing.T) {
 
 			kc := kube.NewFakeClientBuilder().
 				WithStatusSubresource(&tcorev1.Connection{}).
-				WithObjects(tc.obj).
+				WithObjects(tc.obj.ClientObject()).
 				Build()
 
 			r := new(mock.Reconciler)

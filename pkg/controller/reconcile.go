@@ -106,7 +106,7 @@ func (c *Controller) reconcileResource(
 
 	// The derived Controller is responsible for fetching the latest observed
 	// state for our resource and mutating it accordingly.
-	err = c.r.ResourceSetLatest(ctx, latest)
+	latest, err = c.r.ResourceLatest(ctx, desired)
 	if err != nil {
 		return latest, err
 	}
@@ -123,12 +123,7 @@ func (c *Controller) reconcileResource(
 
 	log.Debug("detected difference in desired state")
 
-	err = c.r.ResourceSync(ctx, desired, latest)
-	if err != nil {
-		return latest, err
-	}
-
-	return latest, nil
+	return c.r.ResourceSync(ctx, desired, latest)
 }
 
 // reconcileComplete patches the latest state of the resource back to the

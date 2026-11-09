@@ -15,13 +15,13 @@ const (
 // Reconciling returns the Condition in the resource's Conditions collection
 // that is of type kstatus.ConditionReconciling. If no such condition is found,
 // returns nil.
-func Reconciling(subject Manager) *metav1.Condition {
+func Reconciling(subject HasConditions) *metav1.Condition {
 	return FirstOfType(subject, kstatus.ConditionReconciling)
 }
 
 // IsReconciling returns true if the resource's Conditions collection contains
 // a Condition of type kstatus.ConditionReconciling and that Condition is True.
-func IsReconciling(subject Manager) bool {
+func IsReconciling(subject HasConditions) bool {
 	c := Reconciling(subject)
 	if c == nil {
 		return false
@@ -58,13 +58,13 @@ func SetReconciling(
 // Stalled returns the Condition in the resource's Conditions collection that
 // is of type kstatus.ConditionStalled. If no such condition is found, returns
 // nil.
-func Stalled(subject Manager) *metav1.Condition {
+func Stalled(subject HasConditions) *metav1.Condition {
 	return FirstOfType(subject, kstatus.ConditionStalled)
 }
 
 // IsStalled returns true if the resource's Conditions collection contains a
 // Condition of type kstatus.ConditionStalled and that Condition is True.
-func IsStalled(subject Manager) bool {
+func IsStalled(subject HasConditions) bool {
 	c := Stalled(subject)
 	if c == nil {
 		return false

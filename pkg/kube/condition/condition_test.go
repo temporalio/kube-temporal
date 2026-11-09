@@ -5,10 +5,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	itest "github.com/temporalio/kube-temporal/internal/testing"
 	"github.com/temporalio/kube-temporal/pkg/kube/condition"
+	"github.com/temporalio/kube-temporal/pkg/testutil/fixtures"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kstatus "sigs.k8s.io/cli-utils/pkg/kstatus/status"
+)
+
+const (
+	connName = "my-conn"
 )
 
 func TestFirstOfType(t *testing.T) {
@@ -20,29 +24,31 @@ func TestFirstOfType(t *testing.T) {
 	}{
 		{
 			name: "empty conditions yields nil",
-			res:  &itest.Resource{},
+			res:  fixtures.NewConnection(connName),
 			ct:   kstatus.ConditionReconciling,
 		},
 		{
 			name: "not found condition yields nil",
-			res: &itest.Resource{
-				Status: itest.ResourceStatusWithConditions(
+			res: fixtures.NewConnection(
+				connName,
+				fixtures.ConnectionWithConditions(
 					&metav1.Condition{
 						Type: kstatus.ConditionStalled.String(),
 					},
 				),
-			},
+			),
 			ct: kstatus.ConditionReconciling,
 		},
 		{
 			name: "found condition yields condition",
-			res: &itest.Resource{
-				Status: itest.ResourceStatusWithConditions(
+			res: fixtures.NewConnection(
+				connName,
+				fixtures.ConnectionWithConditions(
 					&metav1.Condition{
 						Type: kstatus.ConditionReconciling.String(),
 					},
 				),
-			},
+			),
 			ct: kstatus.ConditionReconciling,
 			exp: &metav1.Condition{
 				Type: kstatus.ConditionReconciling.String(),
@@ -50,8 +56,9 @@ func TestFirstOfType(t *testing.T) {
 		},
 		{
 			name: "multiple matched conditions yields first condition",
-			res: &itest.Resource{
-				Status: itest.ResourceStatusWithConditions(
+			res: fixtures.NewConnection(
+				connName,
+				fixtures.ConnectionWithConditions(
 					&metav1.Condition{
 						Type:   kstatus.ConditionReconciling.String(),
 						Reason: "1",
@@ -61,7 +68,7 @@ func TestFirstOfType(t *testing.T) {
 						Reason: "2",
 					},
 				),
-			},
+			),
 			ct: kstatus.ConditionReconciling,
 			exp: &metav1.Condition{
 				Type:   kstatus.ConditionReconciling.String(),
